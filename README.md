@@ -1,109 +1,109 @@
-# Tower Defense
+# Tower Defense: City Dump
 
-Tower Defense is a planned two-player strategy game about building an industrial war machine while defending your own tower and attacking your opponent's tower.
+A planned two-player strategy game where rival robot crews turn a city's discarded waste into working industry, defenses, and raiding units. Scan the dump, recover useful scrap, process it into usable materials, and destroy the opposing tower before your own falls.
 
-This repository currently contains the game specification only. The game itself has not been implemented.
+**Status: specification only.** There is no playable game or implemented science engine yet. This README is the authoritative product specification. [The science-engine design](docs/material-science.md) defines material rules; [the integration contract](docs/openindustries-contract.md) defines what must be verified against OpenIndustries before implementation.
 
-## Core Idea
+## The Setting
 
-Two players share one continuously running match. Each player controls a tower and a network of industrial cities. Cities gather resources and run machines that manufacture defenses, ammunition, vehicles, and raiding units.
+Both players occupy opposite ends of one municipal dump on the edge of a city. Appliance heaps, discarded cables, packaging, vehicle scrap, glass, tires, and construction debris form resource sites and obstacles. Service roads connect the heaps to abandoned recycling stations and the two reclamation bases.
 
-The goal is to destroy the opposing tower before your own tower falls.
+Industrial cities become **reclamation outposts**: places to sort, process, store, and manufacture recovered materials. Neutral outposts can be captured; enemy facilities can be disabled or captured under server-defined rules. The dump is the economy and the battlefield, not just a background texture.
 
-## Players
+Each player starts with one tower, two basic scavenger robots, a solar generator, a charged battery, a sorting/inspection bench, a fabricator, and a small recorded starter inventory. Both starting areas offer equivalent access to the inputs needed for the first production chain. Exact quantities, generation rates, recipes, and timings belong in versioned balance data.
 
-- Exactly two players participate in a match.
-- Each player owns one tower and begins with at least one industrial city.
-- Both players can defend their own tower and raid the opposing tower.
-- A player wins when the OpenIndustries server confirms that the opposing tower has been destroyed.
-- A disconnected player remains in the match while their existing industries and automated machines continue to run.
+## The Game Loop
 
-## Game Loop
+1. **Explore and scan.** Sensors reveal evidence about reachable objects rather than exposing the entire map's contents.
+2. **Choose a recovery job.** Compare likely material, confidence, distance, cargo capacity, energy cost, and route exposure.
+3. **Scavenge and haul.** Robots collect finite objects or batches and return them to a base or outpost. Travel, collection, and charging take server time.
+4. **Sort and inspect.** Separate mixed loads and establish usable material grades. Finding a metal object does not establish its alloy or purity.
+5. **Process.** Strip cables, clean and sort scrap, press or remelt suitable metals, and shred and remold compatible polymers. Account for time, power, usable output, and residue.
+6. **Manufacture.** Use materials whose properties satisfy a part's requirements. Build better sensors, robots, processors, defenses, and raid units.
+7. **Contest the dump.** Defend recovery routes, seize outposts, and raid power, scanners, processors, or haulers to disrupt the opponent's supply chain.
+8. **Win.** OpenIndustries confirms tower destruction and records the result. Existing automation continues when a player disconnects.
 
-1. Industrial cities extract and process resources.
-2. Players configure machines to generate power, materials, ammunition, defenses, or attack units.
-3. Defensive machines protect cities, supply routes, and towers.
-4. Raid machines produce and dispatch units toward the opposing tower.
-5. Players can attack enemy industry to weaken production before attempting a final tower assault.
-6. The match continues until one tower reaches zero health.
+## Robots and Sensors
 
-## OpenIndustries MCP Requirement
+Players assign jobs and policies such as survey, collect a material class, return when loaded, recharge, defend, attack, target, and retreat. Robots execute them on the server. Initial robots use deterministic job logic; an LLM is not required to identify materials or decide physical outcomes.
 
-All authoritative game state must be managed through an **OpenIndustries MCP server**. The client is a presentation and command layer only; it must not calculate trusted resources, resolve combat, or decide the winner locally.
+| Sensor or inspection | Useful evidence | Limit in the game |
+| --- | --- | --- |
+| RGB camera | Shape, visible markings, surface condition | Appearance does not certify chemistry or see through a pile |
+| Depth sensor | Reachable surfaces, clearance, approximate volume | Buried contents remain unknown; volume alone does not establish mass |
+| Magnetic/inductive probe | Ferrous response or a conductive object | Does not certify a particular metal, alloy, or purity |
+| Near-infrared scanner | Polymer classification on suitable exposed surfaces | Low-quality, dirty, dark, or mixed-surface readings can remain inconclusive |
+| Thermal sensor | Surface temperature and hot objects | Does not certify battery health, composition, or absence of a hazard |
+| Inspection bench | Slower material grading and component tests | Consumes time and power; unsupported properties remain unknown |
 
-The OpenIndustries MCP integration must provide capabilities for:
+Observations record confidence, sensor, position, and server timestamp. Range, occlusion, and sensor errors matter. Rescanning costs time and power. The client never receives hidden material truth, an opponent's private observations, or a seed that reconstructs them.
 
-- Creating and joining a two-player match
-- Assigning one tower to each player
-- Reading the current match, player, city, machine, unit, and tower state
-- Constructing, configuring, upgrading, starting, and stopping machines
-- Generating and consuming resources over time
-- Producing defensive structures and raiding units
-- Issuing defend, attack, retreat, and target commands
-- Resolving combat and tower damage on the server
-- Streaming or polling authoritative state changes
-- Continuing production and combat while clients are disconnected
-- Recording the winner and final match result
+## A Science Engine for Material Use
 
-Exact MCP tool and resource names must be taken from the connected OpenIndustries server's published schema during implementation. The game must discover and validate that schema at startup rather than relying on undocumented tool names.
+The engine answers **“What can this batch become, what will it cost, and why?”** It uses a curated material catalog, processing rules, and component requirements within the authoritative OpenIndustries simulation. Browser previews cannot award outputs.
 
-## Server Authority
+| Recovered material | Candidate uses after suitable processing | Important requirement |
+| --- | --- | --- |
+| Identified steel scrap | Frames, brackets, tower reinforcement | Grade, condition, and fabrication process must meet the part specification |
+| Aluminum scrap | Light frames, housings, heat spreaders | Alloy and section design matter; not every batch is structural stock |
+| Copper cable or windings | Conductors, motor coils, power distribution | Conductor grade, cross-section, and insulation requirements must pass |
+| Sorted HDPE | Low-temperature housings, cable guides, selected insulating parts | Polymer identity, contamination, and temperature limits must pass |
+| Compatible glass fragments | Filler or panels through a supported process | Broken glass is not automatically optical-grade sensor glass |
+| Recovered tire rubber | Reused tread or granulated material in a supported recipe | Cured rubber is not treated as a freely remeltable thermoplastic |
+| Tested salvaged components | Motors, bearings, electronics, batteries | Track separately from bulk material; tests and condition determine reuse |
 
-The OpenIndustries MCP server is responsible for:
+Properties include density, electrical and thermal conductivity, relevant strength measures, temperature limits, and magnetic behavior. Batches carry composition, contamination, condition, mass, form, and processing history. Unknown properties stay unknown; material families are not interchangeable tokens.
 
-- Match membership and player identity
-- Ownership and permission checks
-- The simulation clock
-- Resource balances and production queues
-- Machine construction and output
-- Unit movement and combat resolution
-- Tower health and destruction
-- Victory, defeat, reconnection, and match history
+The first engine is a deterministic, science-informed rules model. Scientific reference data and game balance values are separately labeled and versioned. It does not simulate arbitrary chemistry or certify real machinery. Sources, rules, and worked examples are in [the science design](docs/material-science.md).
 
-Every mutating command must include the match and player identity, be validated against the latest server state, and return the resulting authoritative state. Commands should be idempotent so retries cannot duplicate machines, units, or attacks.
+## Industry, Power, and Combat
 
-## Expected Match Flow
+Track material batches, reusable components, stored energy, available power, and manufactured inventories. There is no universal “metal” balance that can pay for every part.
 
-1. Player one creates a match through OpenIndustries and receives an invite code.
-2. Player two joins with that code.
-3. OpenIndustries creates both towers, starting cities, resources, and player assignments.
-4. Both clients subscribe to the same match state.
-5. Players build industries and issue defensive or offensive orders through MCP commands.
-6. OpenIndustries runs the simulation continuously and sends state updates to both clients.
-7. OpenIndustries declares the result when a tower is destroyed.
+Initial machines include the starter generator, charging station, inspection/sorting bench, cable separator, metal press, suitable furnace, polymer processor, fabricator, turrets, and raid launchers. Each specifies supported feedstocks, operating limits, throughput, power demand, and upgrades. Unknown batteries and mixed electronic waste cannot enter a general-purpose shredder or furnace.
 
-## Fair Play and Security
+Material choice affects performance: mass changes robot payload and travel energy; conductor properties affect power loss; suitable structural stock supports durability; temperature limits constrain operation. Geometry and processing quality also matter. Combat damage, ammunition, and raid outcomes remain explicit game rules rather than real weapon-design calculations.
 
-- Clients must never hold OpenIndustries server credentials that grant administrative access.
-- A player may only command assets owned by that player.
-- Server timestamps, not client clocks, determine production and cooldowns.
-- The server must reject stale, invalid, unaffordable, or unauthorized commands.
-- Both players must receive the same public match state while private information remains scoped to its owner.
-- Reconnection must restore state from OpenIndustries instead of trusting a local save.
+Factories use declared bills of materials. Better sensors and sorting unlock better inputs; research unlocks recipes and equipment, not new physical properties. Shortages pause work with a clear explanation.
 
-## Initial Scope
+## OpenIndustries Authority
 
-The first playable version should include:
+Exactly two authenticated players share a continuously running match. OpenIndustries owns membership, identity, ownership, simulation time, hidden dump contents, observations, robot jobs, inventories, processing, construction, combat, tower health, and final results.
 
-- One two-player map
-- One tower per player
-- Industrial cities that can be captured or disabled
-- Power, metal, and ammunition resources
-- Generator, refinery, factory, turret, and raid-launcher machines
-- Automated production queues
-- Basic defensive and raiding units
-- Live match updates from OpenIndustries MCP
-- Clear victory and defeat states
+The browser sends commands through a secure backend and displays authorized state. Server credentials never appear in browser code, bundles, or logs. The backend derives player identity from authentication; it does not trust a browser-supplied player ID.
+
+Every mutation is authorized, state-version checked, and idempotent. Collection, input reservation, and production completion are atomic so retries or competing robots cannot duplicate resources. Disconnects do not stop production or combat. Reconnection restores server state, including queued jobs and observations.
+
+Exact MCP tools, resources, authentication, and update mechanisms must come from the target server's published schema. [Required capabilities and the discovery gate](docs/openindustries-contract.md) are requirements, not claims that these APIs already exist.
+
+**No local fallback simulation.** If the server, schema, or a required capability is unavailable, show an integration error and prevent match startup. Missing support must be implemented in OpenIndustries before dependent gameplay ships.
+
+## Player Experience
+
+The interface includes a dump map with survey coverage, robot jobs and cargo, tower status, power use, processing queues, route threats, and a material inspector. Scrap details show what the robot knows and how confidently. Recipes show accepted inputs, unmet requirements, estimated time and energy, expected outputs, and residue.
+
+Explain rejected uses in plain language, for example: “This batch is still mixed; sort it before making a housing.” Crafting previews must not expose unobserved composition. Waiting, active, reconnecting, paused production, integration error, victory, and defeat states must work on desktop and mobile.
+
+## First Playable Scope
+
+- One finite city-dump map, exactly two players, one tower per player, and capturable reclamation outposts.
+- Scavenger robots with cargo and energy limits; camera/depth/probe sensing and an upgrade path to NIR and thermal sensing.
+- Steel, aluminum, copper, HDPE, glass, and rubber with at least one supported recovery/use path each; inspection for reusable components.
+- A complete cable-to-conductor chain and sorted-HDPE-to-housing chain, followed by robot or defense assembly from valid components.
+- Server-owned scanning, collection, sorting, processing, manufacturing, defense, raids, and victory.
+- Automated queues, depletion, residue, suitability explanations, reconnect support, and a starter economy without circular build dependencies.
+
+## Delivery and Verification
+
+Track work in [epic #1](https://github.com/isayahc/tower-defense/issues/1). Deliver incremental child issues and pull requests: discover OpenIndustries capabilities and establish the TypeScript foundation; define the material engine; implement sensing and scavenging; connect processing and manufacturing; complete the two-player interface and combat flow.
+
+Before calling the game playable, verify two authenticated browser sessions from create/join through tower destruction, including disconnect/reconnect during processing. Test conservation, sensor privacy, ownership, concurrent collection, retries, stale commands, power starvation, and unsupported inputs at the authoritative boundary. Run formatting, lint, type-check, test, and build commands once the toolchain exists.
 
 ## Out of Scope for the First Version
 
-- Single-player or local simulation
-- Matches with more than two players
-- Client-authoritative offline saves
-- Trading or a global economy
-- Cosmetic purchases
-- User-created maps
+- Single-player gameplay, more than two players, and local/offline simulation.
+- Global trade, cosmetic purchases, and user-created maps.
+- Arbitrary chemistry, detailed battery recycling, semiconductor fabrication, and engineering certification.
+- An LLM acting as the authority for material identity, physics, inventory, or match results.
 
-## Implementation Rule
-
-Do not implement a local fallback simulation. If OpenIndustries MCP is unavailable or does not expose the required capabilities, the game should display an integration error and prevent the match from starting.
+There are currently no install, run, or deployment commands: implementation and live MCP verification are outstanding.
