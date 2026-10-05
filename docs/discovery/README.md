@@ -1,45 +1,32 @@
-# OpenIndustries Discovery Evidence
+# Open-Industries discovery evidence
 
-On 2026-10-05 UTC, the discovery CLI launched the actual local OpenIndustries MCP process from commit [`a0a45063c99f7243915dd6e92e780c6f88a90fc9`](https://github.com/caid-technologies/Open-Industries/commit/a0a45063c99f7243915dd6e92e780c6f88a90fc9). It completed `initialize`, sent `notifications/initialized`, and requested `tools/list`. The [captured schema](openindustries-local.json) is an observed response, not a fabricated game API.
+The current target is the **SQLite city-dump runtime v2** in `Mapped-Assembly/Open-Industries`, introduced by [Open-Industries PR #3](https://github.com/Mapped-Assembly/Open-Industries/pull/3). The tested commit is `583c6fefd2e63cb49776f81d06d1b688b1bfd06f`, also pinned in `.github/workflows/ci.yml`. The capture in [openindustries-runtime-v2.json](openindustries-runtime-v2.json) comes from starting the actual stdio process, enumerating all **18 tools**, then calling the schema-verified, read-only `astra.game_describe` operation. It is not an invented API.
 
-The server identifies itself as `mergence` version `0.1.0` and advertises only the `tools` capability. No resources, resource templates, or subscriptions are advertised. The client queries those lists only if the server declares resource support.
+The earlier [13-tool capture](openindustries-local.json) is historical evidence from the scene-only server. Old servers and the Supabase/Postgres v1 contract are incompatible with this adapter. Neither can start a game here.
 
-## Observed Mapping
+## Observed capability mapping
 
-| Game requirement | Published capability | Result |
+| Requirement | Published v2 operation/evidence | Scope and gap |
 | --- | --- | --- |
-| Room/layout authoring | `astra.create_room`, `astra.list_rooms`, `astra.read_room` | Local scene files; not match creation or membership |
-| Scene asset inspection | `astra.list_scene_assets`, `astra.inspect_scene_asset` | Geometry/provenance inspection; not physical scrap assays |
-| Saved scene revisions | `astra.create_scene`, `astra.read_scene`, `astra.update_scene` | Scene persistence; not durable game ticks or inventory transactions |
-| Form handoff/review | `astra.read_animation_feedback`, `astra.read_form_project`, `astra.save_form_project`, `astra.list_feedback`, `astra.write_space_brief` | Design workflows; not production or combat |
-| Exactly two players and per-asset command ownership | No matching published operation | Missing game contract |
-| Continuous clock, jobs, and restart recovery | No matching published operation | Missing game contract |
-| Hidden deposits, observations, collection, and depletion | No matching published operation | Missing game contract |
-| Material plans committed with inventory/power transactions | No matching published operation | Missing game contract |
-| Construction, combat, tower destruction, victory | No matching published operation | Missing game contract |
+| Identity and membership | `astra.game_create_match`, `astra.game_join_match`; SQLite account/session service | Two participants, expiring one-use invite; owner comes from the game session |
+| Private world | `astra.game_read_match` and strict snapshot schema | One private finite cable deposit per player; shared spatial map/outposts absent |
+| Inspection | `astra.game_command` / `inspect_deposit` | Server-issued cable assay; no range, occlusion or noisy robot sensing |
+| Collection | `collect_deposit` | Atomic depletion and one batch; no travel, hauling or cargo limits |
+| Processing | `start_processing`, `pause_job`, `resume_job`, `cancel_job` | One powered, durable cable-separator recipe; broad science/manufacturing not yet integrated |
+| Machine/match recovery | `dismantle_machine`, `abandon_match` | Cancellation preserves material and energy spent |
+| Persistence and clock | SQLite WAL and independent runtime process | Service ticks without browsers/MCP; durable receipt and restart tests run in upstream CI |
+| Synchronization | `astra.game_read_match` | Full-snapshot polling; replace state; no event stream advertised |
+| Construction/combat/results | None | Full-match startup remains disabled |
+| Existing 13 scene/room tools | Still listed by discovery | Adapter does not expose them through the game backend |
 
-## Authentication and Persistence Limits
+## Verification boundary
 
-Source inspection of [the MCP entry point](https://github.com/caid-technologies/Open-Industries/blob/a0a45063c99f7243915dd6e92e780c6f88a90fc9/server/astra-mcp.mjs) and [scene documentation](https://github.com/caid-technologies/Open-Industries/blob/a0a45063c99f7243915dd6e92e780c6f88a90fc9/docs/mcp-scenes.md) shows local stdio transport. Local room tools write files; scene tools use opt-in account-scoped cloud persistence through the project's CLI session. Scene revision conflict handling is not equivalent to game command idempotency or tick scheduling.
+Schema equality includes every input and output field, action, version, bound and error shape. Matching names alone are insufficient. Only the checked-in contract is compiled for application validation. Discovery may call `astra.game_describe` only after its schema and every required game schema exactly match the reviewed contract. It never creates, joins or changes a match. No credentials are needed for discovery.
 
-Schema discovery did not sign in, mutate a scene, use a provider, or verify a hosted endpoint. The test suite uses a clearly labeled contract double of the captured schema for pagination, timeout, read-only behavior, error handling, and stderr isolation; those tests do not prove real gameplay.
+The adapter validates successful outputs against the success branch; structured error codes become application-owned messages. Hidden extra fields, invalid responses, unexpected schemas and old versions fail closed. The SDK validates the published structured-error branch as well.
 
-## Reproduce
+`npm run discover:oi -- <checkout>` emits the report. Exit **2** still means the full game is unavailable, even when `processingContractVerified` is true. Exit **1** means discovery failed. No local simulation fallback is provided.
 
-After installing dependencies in both checkouts:
+`npm run test:integration` starts the real independent SQLite service, creates actual local accounts, drives the real MCP SDK through the HTTP boundary and verifies identity, privacy, strict inputs, receipts and revocation. `npm run test:browser` checks desktop/mobile rendering and two isolated Chromium sessions, then uses the browser HTTP API for create/join/inspect/collect/process and logout/reconnect. These are production local SQLite paths, not authentication or database facades. The processing controls/map UI and full game remain follow-up work.
 
-```sh
-npm run discover:oi -- ../Open-Industries
-```
-
-The command emits a JSON report. Exit codes: **2** means discovery succeeded but no verified game adapter exists; **1** means discovery failed. The current slice deliberately cannot report game readiness even if a future server happens to advertise plausible tool names. Supporting a new game API requires a reviewed adapter, contract tests, and authenticated runtime verification.
-
-The SDK uses a bounded stdio buffer, paginated discovery, a deadline, and child-process cleanup. Server stderr is drained without forwarding arbitrary text. No `tools/call` or mutation is performed. No remote credentials are accepted or stored by this CLI.
-
-## Next Required Server Work
-
-Tracked upstream in [OpenIndustries #83](https://github.com/caid-technologies/Open-Industries/issues/83).
-
-OpenIndustries needs an explicit authoritative game-runtime extension: authenticated two-player matches, private/public state projections, transactional inventories, durable server jobs, idempotent commands, simulation time, combat, and restart/reconnect recovery. Its published schemas must identify the actual supported operations. The material core can be reused there as pure calculations; it cannot replace those state and authorization guarantees.
-
-The TypeScript foundation currently contains the discovery CLI and scientific rules modules. Browser architecture, authentication, match endpoints, and real deployment remain outstanding under tower-defense #3/#4 and the upstream integration work.
+The material-calculation library remains pure. Authoritative inventory decisions execute inside Open-Industries transactions; the browser and tower-defense backend never tick, award material, certify properties or resolve combat.
