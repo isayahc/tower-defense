@@ -18,9 +18,10 @@ export function assessGameReadiness(
     canStartMatch: false as const,
     discoveredToolCount: toolNames.length,
     processingContractVerified,
+    canStartRecovery: processingContractVerified,
     code: processingContractVerified ? "FULL_GAME_UNSUPPORTED" : "GAME_CONTRACT_UNVERIFIED",
     message: processingContractVerified
-      ? "The SQLite processing contract is verified. Full-game startup remains disabled: robots, manufacturing, combat and victory are missing."
+      ? "The shared dump is ready for two-player recovery. Robot travel, manufacturing, combat and victory are still in development."
       : "OpenIndustries has no verified compatible game contract. Match startup is disabled.",
     requiredCapabilities: [...GAME_REQUIREMENTS],
   };
@@ -34,7 +35,7 @@ export async function discoverOpenIndustries(checkout: string, timeoutMs = 15000
     try {
       verifySchemas(schema.tools);
       const result = await connection.client.callTool(
-        { name: "astra.game_describe", arguments: { version: 2 } },
+        { name: "astra.game_describe", arguments: { version: 3 } },
         undefined,
         { timeout: timeoutMs },
       );
@@ -46,7 +47,7 @@ export async function discoverOpenIndustries(checkout: string, timeoutMs = 15000
     }
     return {
       format: "tower-defense.mcp-discovery" as const,
-      version: 2 as const,
+      version: 3 as const,
       transport: "local-stdio" as const,
       ...schema,
       ...(processingContractVerified ? { contract } : {}),

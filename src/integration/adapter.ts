@@ -14,7 +14,7 @@ export async function verifyRuntime(connection: RuntimeConnection) {
   const schema = await publishedSchema(connection.client);
   verifySchemas(schema.tools);
   const result = await connection.client.callTool(
-    { name: "astra.game_describe", arguments: { version: 2 } },
+    { name: "astra.game_describe", arguments: { version: 3 } },
     undefined,
     { timeout: 15000 },
   );
@@ -54,7 +54,9 @@ export class GameAdapter {
         });
       } catch {
         throw new IntegrationError(
-          name === "astra.game_read_match" || name === "astra.game_describe"
+          name === "astra.game_read_match" ||
+            name === "astra.game_list_matches" ||
+            name === "astra.game_describe"
             ? "UNAVAILABLE"
             : "OUTCOME_UNKNOWN",
         );

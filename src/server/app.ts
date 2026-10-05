@@ -28,6 +28,7 @@ export async function startApp(config: AppConfig = {}) {
       [
         ["/", "index.html", "text/html"],
         ["/app.js", "app.js", "text/javascript"],
+        ["/game.js", "game.js", "text/javascript"],
         ["/style.css", "style.css", "text/css"],
       ].map(
         async ([route, file, mime]) =>
@@ -93,7 +94,7 @@ export async function startApp(config: AppConfig = {}) {
         if (!report.readiness.processingContractVerified)
           return { state: "incompatible", ...report.readiness, registrationEnabled: false };
         const health = await service.request("/health");
-        if (health.version !== 2 || health.scheduler_healthy !== true)
+        if (health.version !== 3 || health.scheduler_healthy !== true)
           throw new IntegrationError("SCHEDULER_UNAVAILABLE");
         return {
           state: "partial",

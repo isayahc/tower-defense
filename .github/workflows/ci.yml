@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Mapped-Assembly/Open-Industries
-          ref: 583c6fefd2e63cb49776f81d06d1b688b1bfd06f
+          ref: e8529035679f80ab1aa286fb07ac51032c9e2ff8
           path: .integration/open-industries
       - uses: actions/setup-node@v4
         with:
@@ -44,7 +44,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always() && runner.os == 'Linux'
         with:
-          name: web-foundation-browser-evidence
+          name: world-recovery-browser-evidence
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7

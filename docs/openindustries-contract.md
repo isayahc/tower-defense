@@ -1,6 +1,6 @@
 # OpenIndustries Integration Contract
 
-Status: the actual SQLite v2 stdio server exposes 18 tools, including five game tools. Their exact schemas and static contract are verified by the adapter; see [discovery evidence](discovery/README.md) and [web architecture](web-foundation.md). Native local account, processing, ownership and reconnect paths are exercised through the real service/MCP boundary. Full-game support, the map/robot UI and external deployment remain outstanding. The matrix below describes the complete target; it is not a claim that the bounded processing runtime implements every row.
+Status: the actual SQLite v3 stdio server exposes 19 tools, including six game tools. Exact schema verification enables two-player recovery sessions with a finite shared map, private cable inspection/collection, solar-powered processing, starter component ledgers and reconnect/lifecycle controls. See [discovery evidence](discovery/README.md) and [web setup](web-foundation.md). Full-game support (moving robots, expanded sensing/science, manufacturing, combat and victory) and hosted deployment remain outstanding. The matrix below describes the complete target.
 
 ## Discovery Gate
 
