@@ -38,6 +38,8 @@ The SDK uses a bounded stdio buffer, paginated discovery, a deadline, and child-
 
 ## Next Required Server Work
 
+Tracked upstream in [OpenIndustries #83](https://github.com/caid-technologies/Open-Industries/issues/83).
+
 OpenIndustries needs an explicit authoritative game-runtime extension: authenticated two-player matches, private/public state projections, transactional inventories, durable server jobs, idempotent commands, simulation time, combat, and restart/reconnect recovery. Its published schemas must identify the actual supported operations. The material core can be reused there as pure calculations; it cannot replace those state and authorization guarantees.
 
 The TypeScript foundation currently contains the discovery CLI and scientific rules modules. Browser architecture, authentication, match endpoints, and real deployment remain outstanding under tower-defense #3/#4 and the upstream integration work.

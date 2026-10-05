@@ -1,0 +1,2 @@
+# Keep source and formatter expectations consistent on Windows and Linux.
+* text=auto eol=lf
