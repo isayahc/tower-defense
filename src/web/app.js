@@ -1,3 +1,4 @@
+import { createGame } from "/game.js";
 const element = (id) => document.getElementById(id);
 let connected = false;
 let authenticated = false;
@@ -9,11 +10,21 @@ async function request(path, options = {}) {
     headers: { "content-type": "application/json", ...options.headers },
   });
   const result = await response.json();
-  if (!response.ok)
-    throw new Error(result.error?.message || "The request failed. Please try again.");
+  if (!response.ok) {
+    const error = new Error(result.error?.message || "The request failed. Please try again.");
+    error.code = result.error?.code;
+    throw error;
+  }
   return result;
 }
+const game = createGame(request);
+window.addEventListener("game-auth-expired", () => {
+  authenticated = false;
+  accountView();
+});
 function accountView() {
+  document.body.classList.toggle("is-signed-in", authenticated);
+  game.setAccess(connected, authenticated);
   element("login-form").hidden = authenticated;
   element("signed-in").hidden = !authenticated;
   element("account-badge").textContent = authenticated ? "SIGNED IN" : "SIGNED OUT";
@@ -29,16 +40,16 @@ async function refresh() {
   accountView();
   try {
     const result = await request("/api/integration");
-    connected = result.state === "partial" && result.processingContractVerified === true;
+    connected = result.state === "partial" && result.canStartRecovery === true;
     element("connection-title").textContent = connected
-      ? "Processing runtime connected."
+      ? "Recovery runtime connected."
       : "The runtime is not ready.";
     element("connection-message").textContent = result.message;
-    element("badge").textContent = connected ? "FOUNDATION READY" : "NOT CONNECTED";
+    element("badge").textContent = connected ? "RECOVERY READY" : "NOT CONNECTED";
     element("badge").className = connected ? "badge ready" : "badge";
     document.querySelector(".connection").classList.toggle("connected", connected);
     element("capability-note").textContent = connected
-      ? "The server supports this processing foundation. Full gameplay remains unavailable."
+      ? "A shared finite map, private recovery and persistent processing are ready."
       : "These features need a compatible, running server.";
     element("register-label").hidden = !connected || !result.registrationEnabled;
     if (element("register-label").hidden) element("register").checked = false;

@@ -10,7 +10,7 @@ if (!checkout) throw new Error("Set OI_CHECKOUT to the documented SQLite runtime
 const runtime = await launchRuntime(checkout);
 const app = await startApp({ checkout, serviceUrl: runtime.origin, port: 0 });
 const headers = { origin: app.origin, "content-type": "application/json" };
-const command = () => ({ version: 2, command_id: randomUUID() });
+const command = () => ({ version: 3, command_id: randomUUID() });
 const password = "test-only-long-password";
 async function register(username: string) {
   const response = await fetch(`${app.origin}/api/session`, {
@@ -36,7 +36,7 @@ async function call(cookie: string, name: string, args: unknown) {
 }
 try {
   const discovery = await discoverOpenIndustries(checkout);
-  assert.equal(discovery.tools.length, 18);
+  assert.equal(discovery.tools.length, 19);
   assert.equal(discovery.readiness.processingContractVerified, true);
   assert.equal(discovery.readiness.canStartMatch, false);
   const a = await register("alice"),
@@ -55,7 +55,7 @@ try {
     invite_code: created.body.invite_code,
   });
   assert.equal(joined.status, 200);
-  const readArgs = { version: 2, match_id: id };
+  const readArgs = { version: 3, match_id: id };
   assert.equal((await call(c, "read_match", readArgs)).body.error.code, "NOT_AVAILABLE");
   assert.equal(
     (
