@@ -2,7 +2,7 @@
 
 A planned two-player strategy game where rival robot crews turn a city's discarded waste into working industry, defenses, and raiding units. Scan the dump, recover useful scrap, process it into usable materials, and destroy the opposing tower before your own falls.
 
-**Status: two-player recovery sessions, a finite city-dump map and browser processing controls are implemented; full combat matches remain in development.** The backend verifies the 19-tool Open-Industries v3 server, isolates browser sessions and exposes only six reviewed game tools. The game stack uses SQLite and native game accounts, with no Supabase dependency. See [web setup](docs/web-foundation.md) and [discovery evidence](docs/discovery/README.md).
+**Status: two-player recovery sessions, a finite city-dump map and browser processing controls are implemented; full combat matches remain in development.** The backend verifies the 21-tool Open-Industries v4 server, isolates browser sessions and exposes only eight reviewed game tools. The material lab adds authoritative bench evidence, suitability checks, component tests and residue recovery. The game stack uses SQLite and native game accounts, with no Supabase dependency. See [web setup](docs/web-foundation.md) and [discovery evidence](docs/discovery/README.md).
 
 This README is the product specification. [The science-engine design](docs/material-science.md) defines the intended full engine; [the integration contract](docs/openindustries-contract.md) defines the authoritative boundary still required for playable matches.
 
@@ -117,7 +117,7 @@ npm ci
 npm run dev
 ```
 
-The web foundation opens at `http://127.0.0.1:3000`. Without an upstream checkout/service, it displays an integration error and keeps startup disabled. With the v3 service connected, register/sign in, create a recovery session and invite one partner. Use the map to inspect, collect and process your private starter cable. Saved matches, depletion and jobs survive refresh/reconnect. Robots and fabricators are provisioned but parked; travel, manufacturing and combat remain later stages.
+The web foundation opens at `http://127.0.0.1:3000`. Without an upstream checkout/service, it displays an integration error and keeps startup disabled. With the v4 service connected, register/sign in, create a recovery session and invite one partner. Use the map to inspect, collect and process your private starter cable. Saved matches, depletion and jobs survive refresh/reconnect. Robots and fabricators are provisioned but parked; travel, manufacturing and combat remain later stages.
 
 ```sh
 npm run demo:science

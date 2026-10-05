@@ -27,7 +27,7 @@ function materialBatch(material: MaterialId, overrides: Partial<Batch> = {}): Ba
     constituents: [{ material, massG: 4000 }],
     form: "scrap",
     inspection: "graded",
-    grade: "synthetic-test-grade",
+    grade: `game-${material}-v1`,
     condition: "sound",
     hazard: "none-detected",
     properties: [],
@@ -354,6 +354,8 @@ test("purity, grade, form, condition, quantity, and measured properties control 
         validFromC: 10,
         validToC: 30,
         source: "synthetic fixture measurement",
+        basis: "measurement-fixture",
+        uncertainty: { lower: 49000000, upper: 51000000 },
       },
     ],
   });
@@ -403,6 +405,8 @@ test("service temperature is separate from melt processing and unrelated materia
         validFromC: 0,
         validToC: 120,
         source: "synthetic fixture rating, not a universal HDPE value",
+        basis: "measurement-fixture",
+        uncertainty: { lower: 65, upper: 75 },
       },
     ],
   });

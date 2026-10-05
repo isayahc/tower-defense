@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { request as httpRequest } from "node:http";
 import { test } from "node:test";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
-import captured from "../src/integration/contract-v3.json" with { type: "json" };
+import captured from "../src/integration/contract-v4.json" with { type: "json" };
 import {
   IntegrationError,
   safeError,
@@ -26,16 +26,16 @@ test("exact schemas are required; plausible names, extra identity fields and cha
   assert.throws(() => verifySchemas(changed), IntegrationError);
   for (const args of [
     { version: 1, command_id: randomUUID() },
-    { version: 3, command_id: randomUUID(), player_id: randomUUID() },
-    { version: 3, command_id: "bad" },
+    { version: 4, command_id: randomUUID(), player_id: randomUUID() },
+    { version: 4, command_id: "bad" },
   ]) {
     assert.throws(() => validateRequest("astra.game_create_match", args), IntegrationError);
   }
-  validateRequest("astra.game_create_match", { version: 3, command_id: randomUUID() });
+  validateRequest("astra.game_create_match", { version: 4, command_id: randomUUID() });
   assert.throws(
     () =>
       validateRequest("astra.game_command", {
-        version: 3,
+        version: 4,
         command_id: randomUUID(),
         match_id: randomUUID(),
         expected_revision: 1,
@@ -53,7 +53,7 @@ test("exact schemas are required; plausible names, extra identity fields and cha
   assert.throws(
     () =>
       validateResult("astra.game_read_match", {
-        version: 3,
+        version: 4,
         balance_version: "dump-v1",
         snapshot: {},
         hidden_seed: "secret",
@@ -112,7 +112,7 @@ test("unconfigured web foundation serves assets, blocks startup, origin attacks 
     for (const path of [
       "/.env",
       "/src/server/app.ts",
-      "/integration/contract-v3.json",
+      "/integration/contract-v4.json",
       "/package.json",
     ])
       assert.equal((await fetch(app.origin + path)).status, 404);

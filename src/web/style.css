@@ -612,3 +612,38 @@ progress {
 .is-signed-in .workspace h2 {
   font-size: 20px;
 }
+
+.science-panel {
+  margin: 1.5rem 0;
+}
+.science-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.science-fields label {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.science-fields select,
+.science-fields input {
+  width: 100%;
+  min-width: 0;
+}
+#science-result,
+#science-catalog {
+  overflow-wrap: anywhere;
+  margin: 1rem 0;
+}
+@media (max-width: 650px) {
+  .science-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Frequent snapshot redraws must not scroll the view back to an old input. */
+html {
+  overflow-anchor: none;
+}

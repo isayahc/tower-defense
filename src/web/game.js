@@ -9,6 +9,7 @@ const kg = (g) => `${(g / 1000).toFixed(2)} kg`;
 export function createGame(request) {
   let access = false;
   let busy = false;
+  let idleWaiters = [];
   let stale = true;
   let snapshot;
   let pending;
@@ -17,10 +18,34 @@ export function createGame(request) {
   let generation = 0;
   let listed = [];
   let invite = null;
+  let scienceCatalog;
+  let evaluation;
+  let interacting = false;
+  let renderDeferred = false;
+  const releaseInteraction = () => {
+    interacting = false;
+    if (renderDeferred) {
+      renderDeferred = false;
+      requestAnimationFrame(() => {
+        render();
+        controls();
+      });
+    }
+  };
+  el("recovery").addEventListener("pointerdown", () => {
+    interacting = true;
+  });
+  window.addEventListener("pointerup", releaseInteraction);
+  window.addEventListener("pointercancel", releaseInteraction);
+  window.addEventListener("blur", releaseInteraction);
+  el("recovery").addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") interacting = true;
+  });
+  window.addEventListener("keyup", releaseInteraction);
   const api = (name, args) =>
     request("/api/runtime", {
       method: "POST",
-      body: JSON.stringify({ name: `astra.game_${name}`, args: { version: 3, ...args } }),
+      body: JSON.stringify({ name: `astra.game_${name}`, args: { version: 4, ...args } }),
     });
   const say = (text) => {
     el("game-message").textContent = text;
@@ -43,11 +68,17 @@ export function createGame(request) {
           : "LIVE";
     el("game-state").className = `badge ${stale ? "" : "ready"}`;
   }
-  async function work(fn) {
-    if (!access || busy) return;
+  async function work(fn, background = false) {
+    if (!access) return;
+    const epoch = generation;
+    // A user click that coincides with polling must not silently disappear.
+    while (busy) {
+      if (background) return;
+      await new Promise((resolve) => idleWaiters.push(resolve));
+      if (!access || epoch !== generation) return;
+    }
     busy = true;
     controls();
-    const epoch = generation;
     try {
       await fn();
     } catch (error) {
@@ -69,6 +100,9 @@ export function createGame(request) {
       }
     } finally {
       busy = false;
+      const waiting = idleWaiters;
+      idleWaiters = [];
+      for (const resume of waiting) resume();
       controls();
     }
   }
@@ -87,6 +121,8 @@ export function createGame(request) {
     const result = await api("read_match", { match_id: id });
     if (epoch !== generation) return;
     snapshot = result.snapshot;
+    await loadCatalog(epoch);
+    if (epoch !== generation) return;
     stale = !snapshot.scheduler_healthy;
     render();
   }
@@ -122,6 +158,7 @@ export function createGame(request) {
           "LIMIT_REACHED",
           "SCHEDULER_UNAVAILABLE",
           "INVALID_REQUEST",
+          "INVALID_FEEDSTOCK",
           "COMMAND_ID_REUSED",
           "AUTH_REQUIRED",
         ].includes(error.code)
@@ -172,6 +209,9 @@ export function createGame(request) {
     if (epoch !== generation) return;
     selection = null;
     adopt(result);
+    await loadCatalog(epoch);
+    if (epoch !== generation) return;
+    render();
     say("Current match restored.");
   }
   async function list(reset, autoOpen = false) {
@@ -348,7 +388,113 @@ export function createGame(request) {
       ),
     );
   }
+  async function loadCatalog(epoch) {
+    if (scienceCatalog || !snapshot) return;
+    const result = await api("science_catalog", { match_id: snapshot.match_id });
+    if (epoch === generation) scienceCatalog = result.catalog;
+  }
+  function clearEvaluation() {
+    evaluation = undefined;
+    el("science-result").replaceChildren();
+    el("start-material-process").dataset.allowed = "false";
+  }
+  function scienceSelection() {
+    return {
+      target_id: el("science-target").value,
+      query: el("science-query").value,
+      design_id: el("science-design").value,
+      temperature_c: Number(el("science-temperature").value),
+    };
+  }
+  function renderScience() {
+    const s = snapshot;
+    if (evaluation && (evaluation.match !== s.match_id || evaluation.revision !== s.revision))
+      clearEvaluation();
+    el("science-version").textContent =
+      `${s.science.versions.catalog} · ${s.science.versions.recipes} · ${s.science.versions.sensors} · ${s.science.observations.length} saved observations`;
+    const updateOptions = (id, rows) => {
+      const select = el(id),
+        previous = select.value;
+      const signature = JSON.stringify(rows);
+      if (select.dataset.options === signature) return;
+      select.dataset.options = signature;
+      select.replaceChildren();
+      for (const [value, label] of rows) {
+        const option = node("option", label);
+        option.value = value;
+        select.append(option);
+      }
+      if (rows.some(([v]) => v === previous)) select.value = previous;
+    };
+    const query = el("science-query").value;
+    updateOptions(
+      "science-target",
+      query === "component"
+        ? s.science.components.map((c) => [c.id, `${c.kind} · ${c.quantity} items`])
+        : s.batches
+            .filter((b) => b.state !== "consumed")
+            .map((b) => [
+              b.id,
+              `${b.output_role ?? "cable"} · ${kg(b.copper_g + b.hdpe_g + b.dirt_g)} · ${b.id.slice(0, 8)}`,
+            ]),
+    );
+    if (scienceCatalog) {
+      const designs =
+        query === "component"
+          ? [{ id: "starter-maintenance-v1" }]
+          : query === "process"
+            ? scienceCatalog.recipes
+            : query === "substitution"
+              ? scienceCatalog.substitutions
+              : scienceCatalog.parts;
+      updateOptions(
+        "science-design",
+        designs.map((d) => [d.id, d.id.replaceAll("-", " ")]),
+      );
+      const list = el("science-catalog");
+      if (!list.childElementCount)
+        for (const [key, material] of Object.entries(scienceCatalog.materials)) {
+          const recipes = scienceCatalog.recipes.filter((r) => r.target === key);
+          list.append(
+            node(
+              "p",
+              `${material.name}: ${material.uses.join(", ")}. ${recipes.map((r) => `${r.id}: ${r.machine}, ${r.powerW} W${r.minimumTemperatureC === null ? "" : `, at least ${r.minimumTemperatureC} °C`}`).join("; ")}.`,
+            ),
+          );
+        }
+    }
+    el("evaluate-material").dataset.allowed = String(
+      !!scienceCatalog && !!el("science-target").value,
+    );
+    const stock = el("science-components");
+    stock.replaceChildren();
+    const ready =
+      s.status === "active" &&
+      s.machines[0].status === "ready" &&
+      !s.jobs.some((j) => ["running", "paused"].includes(j.state));
+    for (const c of s.science.components) {
+      const row = node("div", undefined, "batch");
+      row.append(
+        node(
+          "p",
+          `${c.quantity} × ${c.kind} · ${c.tested ? c.condition : "untested"} · existing stock allocation`,
+        ),
+      );
+      row.append(
+        button(
+          `Test ${c.kind} · 3 s / 300 J`,
+          () => action("inspect_component", { component_id: c.id }),
+          ready && !c.tested,
+        ),
+      );
+      stock.append(row);
+    }
+  }
   function render() {
+    if (interacting) {
+      renderDeferred = true;
+      return;
+    }
     if (!snapshot) {
       el("match-view").hidden = true;
       return;
@@ -381,7 +527,7 @@ export function createGame(request) {
     el("finish-recovery").dataset.allowed = String(
       s.status === "active" &&
         !s.base.ready_to_finish &&
-        s.jobs.some((j) => j.state === "completed") &&
+        s.jobs.some((j) => j.state === "completed" && !j.recipe.startsWith("inspect-")) &&
         !s.jobs.some((j) => ["running", "paused"].includes(j.state)),
     );
     el("finish-recovery").textContent = s.base.ready_to_finish
@@ -413,11 +559,11 @@ export function createGame(request) {
     for (const job of s.jobs) {
       const row = node("div", undefined, "job");
       row.dataset.state = job.state;
-      row.append(node("strong", `Cable separation · ${job.state}`));
+      row.append(node("strong", `${job.recipe.replaceAll("-", " ")} · ${job.state}`));
       const progress = node("progress");
       progress.max = job.duration_ms;
       progress.value = job.work_ms;
-      progress.setAttribute("aria-label", "Cable separation progress");
+      progress.setAttribute("aria-label", `${job.recipe.replaceAll("-", " ")} progress`);
       row.append(progress);
       row.append(
         node(
@@ -441,6 +587,7 @@ export function createGame(request) {
     if (!s.batches.length)
       batches.append(node("p", "Your recovered material will appear here.", "note"));
     for (const batch of s.batches.filter((b) => b.state !== "consumed")) {
+      const evidence = s.science.batches.find((b) => b.id === batch.id)?.evidence;
       const row = node("div", undefined, "batch");
       row.append(
         node(
@@ -451,10 +598,35 @@ export function createGame(request) {
       row.append(
         node(
           "p",
-          `${batch.state} · ${batch.grade}\nCu ${kg(batch.copper_g)} / HDPE ${kg(batch.hdpe_g)} / dirt ${kg(batch.dirt_g)}`,
+          `${batch.state} · ${evidence?.grade ?? batch.grade}\nCu ${kg(batch.copper_g)} / HDPE ${kg(batch.hdpe_g)} / dirt ${kg(batch.dirt_g)}`,
           "note",
         ),
       );
+      if (evidence?.inspection === "graded") {
+        row.append(
+          node("p", `Bench grade: ${evidence.grade ?? "unknown"} · ${evidence.condition}`, "note"),
+        );
+        for (const property of evidence.properties)
+          row.append(
+            node(
+              "p",
+              `${property.kind}: ${property.uncertainty ? `${property.uncertainty.lower}–${property.uncertainty.upper}` : "uncertainty unknown"} ${property.unit}, ${property.validFromC}–${property.validToC} °C · ${property.source} (game measurement fixture)`,
+              "note",
+            ),
+          );
+      }
+      if (batch.form !== "cable")
+        row.append(
+          button(
+            `Inspect ${batch.output_role} · 3 s / 300 J`,
+            () => action("inspect_batch", { batch_id: batch.id }),
+            s.status === "active" &&
+              batch.state === "available" &&
+              evidence?.inspection !== "graded" &&
+              s.machines[0].status === "ready" &&
+              !s.jobs.some((j) => ["running", "paused"].includes(j.state)),
+          ),
+        );
       if (batch.form === "cable")
         row.append(
           button(
@@ -469,6 +641,7 @@ export function createGame(request) {
         );
       batches.append(row);
     }
+    renderScience();
     const assets = el("assets");
     assets.replaceChildren();
     for (const a of s.base.assets) {
@@ -488,7 +661,7 @@ export function createGame(request) {
       0,
     );
     el("starter-total").textContent =
-      `${s.base.starter_ledger.length} recorded allocations · ${kg(starterMass)} starter equipment and stock. Game balance masses; no manufacturing or material certification yet.`;
+      `${s.base.starter_ledger.length} recorded allocations · ${kg(starterMass)} starter equipment and stock. Game balance masses; each component is allocated once.`;
     if (focused && !focused.isConnected) {
       const candidates = [...document.querySelectorAll("#match-view button, #dump-map [tabindex]")];
       const replacement = candidates.find((n) =>
@@ -500,6 +673,66 @@ export function createGame(request) {
     }
     controls();
   }
+  for (const id of ["science-query", "science-target", "science-design", "science-temperature"])
+    el(id).addEventListener(id === "science-temperature" ? "input" : "change", () => {
+      clearEvaluation();
+      if (snapshot) renderScience();
+      controls();
+    });
+  el("evaluate-material").addEventListener("click", () =>
+    work(async () => {
+      const selection = scienceSelection(),
+        epoch = generation,
+        match = snapshot.match_id;
+      const result = await api("evaluate", { match_id: match, ...selection });
+      if (
+        epoch !== generation ||
+        snapshot.match_id !== match ||
+        JSON.stringify(selection) !== JSON.stringify(scienceSelection())
+      )
+        return;
+      evaluation = { match, revision: result.revision, selection, result: result.result };
+      const r = result.result,
+        area = el("science-result");
+      area.replaceChildren();
+      area.append(
+        node(
+          "strong",
+          r.status === "eligible" ? "Eligible under this game design" : `${r.status}: ${r.code}`,
+        ),
+      );
+      if (r.message) area.append(node("p", r.message));
+      if (r.kind === "process-plan")
+        area.append(
+          node(
+            "p",
+            `${r.durationMs / 1000} s · ${r.energyJ} J · ${r.outputs.map((o) => `${o.id}: ${o.massG} g`).join(", ")} · residue: ${r.residue.massG} g`,
+          ),
+        );
+      if (r.kind === "substitution-plan")
+        area.append(
+          node(
+            "p",
+            `${r.areaMm2} mm² (${r.areaMultiplier.toFixed(2)} × baseline), ${r.requiredMassG} g, ${r.lossW.toFixed(3)} W loss. Required connector: ${r.requiredConnector}.`,
+          ),
+        );
+      area.append(
+        node("p", `Next: ${r.nextActions.map((a) => a.replaceAll("-", " ")).join("; ")}`, "note"),
+      );
+      el("start-material-process").dataset.allowed = String(
+        r.kind === "process-plan" && snapshot.status === "active",
+      );
+    }),
+  );
+  el("start-material-process").addEventListener("click", () => {
+    if (evaluation?.result.kind !== "process-plan") return;
+    const chosen = evaluation.selection;
+    void action("start_material_process", {
+      batch_id: chosen.target_id,
+      machine_id: snapshot.machines[0].id,
+      recipe_id: chosen.design_id,
+    });
+  });
   el("create-recovery").addEventListener("click", () => mutate("create_match", {}));
   el("join-form").addEventListener("submit", (e) => {
     e.preventDefault();
@@ -534,7 +767,7 @@ export function createGame(request) {
     controls();
   });
   setInterval(() => {
-    if (access && snapshot && !busy && !pending) void work(read);
+    if (access && snapshot && !busy && !pending && !interacting) void work(read, true);
   }, 2000);
   return {
     setAccess(connected, authenticated) {
@@ -547,6 +780,8 @@ export function createGame(request) {
       if (!authenticated) {
         generation++;
         snapshot = undefined;
+        scienceCatalog = undefined;
+        clearEvaluation();
         pending = undefined;
         invite = null;
         selection = null;
@@ -556,6 +791,11 @@ export function createGame(request) {
         for (const id of ["invite-code", "invite-match", "join-match", "join-code"])
           el(id).value = "";
         for (const id of [
+          "science-catalog",
+          "science-components",
+          "science-version",
+          "science-target",
+          "science-design",
           "dump-map",
           "deposit-detail",
           "batches",
@@ -568,6 +808,7 @@ export function createGame(request) {
           "match-id",
         ])
           el(id).replaceChildren();
+        for (const id of ["science-target", "science-design"]) delete el(id).dataset.options;
         render();
         controls();
       } else if (next && !was) {

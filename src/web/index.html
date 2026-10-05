@@ -53,6 +53,22 @@
           <section class="panel map-panel"><div class="panel-top"><p class="eyebrow">FINITE MUNICIPAL DUMP</p><span class="badge muted">96 × 56</span></div><svg id="dump-map" viewBox="0 0 96 56" aria-label="Shared dump map: bases, waste sites, service roads and neutral outposts" role="img"><title>Municipal dump map</title></svg><p class="map-legend"><span>◆ Bases</span><span>● Waste sites</span><span>□ Neutral outposts</span><span>▰ Service roads</span></p><label for="deposit-choice">Select a waste site</label><select id="deposit-choice"></select><div id="deposit-detail"></div></section>
           <section class="panel"><p class="eyebrow">YOUR PROCESSING BENCH</p><div class="power"><strong id="power-reading"></strong><p id="power-note" class="note"></p></div><h3>Recovered inventory</h3><div id="batches"></div><h3>Processing jobs</h3><div id="jobs"></div></section>
         </div>
+        <section class="panel science-panel" aria-labelledby="science-heading">
+          <p class="eyebrow">MATERIAL LAB</p><h3 id="science-heading">Inspect. Check. Recover.</h3>
+          <p id="science-version" class="note"></p>
+          <p class="note">Bench readings are bounded game fixtures. Unknown grades stay unknown. Other processing machines and assembly jobs are still in development.</p>
+          <div class="science-fields">
+            <div><label for="science-query">Evaluation</label><select id="science-query"><option value="use">Part suitability</option><option value="process">Processing plan</option><option value="substitution">Approved substitution</option><option value="component">Reusable component</option></select></div>
+            <div><label for="science-target">Owned material or component</label><select id="science-target"></select></div>
+            <div><label for="science-design">Design or recipe</label><select id="science-design"></select></div>
+            <div><label for="science-temperature">Operating temperature (°C)</label><input id="science-temperature" type="number" min="-273.15" max="5000" value="20" step="any"></div>
+          </div>
+          <button type="button" id="evaluate-material" data-mutation="true">Check suitability</button>
+          <button type="button" id="start-material-process" data-mutation="true" data-allowed="false" class="secondary">Start approved process</button>
+          <div id="science-result" role="status" aria-live="polite"></div>
+          <details><summary>Material catalog and required equipment</summary><div id="science-catalog"></div></details>
+          <h3>Reusable starter stock</h3><div id="science-components"></div>
+        </section>
         <details class="panel equipment"><summary>Your base, robots and starter inventory</summary><div id="assets"></div><h3>Recorded starter stock</h3><p id="starter-stock"></p><p id="starter-total" class="note"></p></details>
         <div class="session-actions"><button type="button" id="finish-recovery" data-mutation="true">Finish recovery session</button><button type="button" id="end-session" class="secondary" data-mutation="true">End session for both crews</button><p class="note">After both crews process their cable, both can finish to archive the session.</p></div>
       </section>

@@ -35,7 +35,7 @@ export async function discoverOpenIndustries(checkout: string, timeoutMs = 15000
     try {
       verifySchemas(schema.tools);
       const result = await connection.client.callTool(
-        { name: "astra.game_describe", arguments: { version: 3 } },
+        { name: "astra.game_describe", arguments: { version: 4 } },
         undefined,
         { timeout: timeoutMs },
       );
@@ -47,7 +47,7 @@ export async function discoverOpenIndustries(checkout: string, timeoutMs = 15000
     }
     return {
       format: "tower-defense.mcp-discovery" as const,
-      version: 3 as const,
+      version: 4 as const,
       transport: "local-stdio" as const,
       ...schema,
       ...(processingContractVerified ? { contract } : {}),

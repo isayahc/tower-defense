@@ -94,7 +94,7 @@ export async function startApp(config: AppConfig = {}) {
         if (!report.readiness.processingContractVerified)
           return { state: "incompatible", ...report.readiness, registrationEnabled: false };
         const health = await service.request("/health");
-        if (health.version !== 3 || health.scheduler_healthy !== true)
+        if (health.version !== 4 || health.scheduler_healthy !== true)
           throw new IntegrationError("SCHEDULER_UNAVAILABLE");
         return {
           state: "partial",
