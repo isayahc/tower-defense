@@ -7,24 +7,29 @@
     "node": ">=22.18.0"
   },
   "scripts": {
-    "dev": "node --import tsx src/cli/science-demo.ts",
+    "dev": "node --env-file-if-exists=.env --import tsx src/server/main.ts",
     "demo:science": "node --import tsx src/cli/science-demo.ts",
     "discover:oi": "node --import tsx src/cli/discover.ts",
     "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/build-web.mjs",
     "test": "node --import tsx --test tests/*.test.ts",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
+    "start": "node --env-file-if-exists=.env dist/server/main.js",
+    "test:browser": "node --import tsx scripts/browser-test.ts",
+    "test:integration": "node --import tsx scripts/integration-test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.0",
+    "ajv": "8.17.1",
     "zod": "^4.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@types/node": "^22.0.0",
+    "playwright": "1.63.0",
     "tsx": "^4.20.0",
     "typescript": "5.9.3"
   }

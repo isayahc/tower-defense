@@ -2,7 +2,7 @@
 
 A planned two-player strategy game where rival robot crews turn a city's discarded waste into working industry, defenses, and raiding units. Scan the dump, recover useful scrap, process it into usable materials, and destroy the opposing tower before your own falls.
 
-**Status: material-calculation core and MCP discovery implemented; no playable match yet.** The TypeScript core validates material batches, evaluates part suitability, and calculates processing plans with conserved mass and explicit energy. It does not own inventory or run a local game. The running OpenIndustries stdio server has been inspected: it currently exposes scene/room tools, not authoritative game operations. See the [discovery evidence and capability gaps](docs/discovery/README.md).
+**Status: material core, SQLite runtime adapter, account boundary and responsive web foundation implemented; no full playable match yet.** The backend discovers and verifies the 18-tool Open-Industries server, isolates browser sessions and forwards only the five reviewed game tools. The game stack uses SQLite and native game accounts, with no Supabase dependency. See [web setup](docs/web-foundation.md) and [discovery evidence](docs/discovery/README.md).
 
 This README is the product specification. [The science-engine design](docs/material-science.md) defines the intended full engine; [the integration contract](docs/openindustries-contract.md) defines the authoritative boundary still required for playable matches.
 
@@ -110,26 +110,27 @@ Before calling the game playable, verify two authenticated browser sessions from
 
 ## Run the Current Implementation
 
-Install Node.js **22.18 or newer** and Git. These commands also work in Windows PowerShell:
+Install Node.js **22.18 or newer** and Git, then install both this repository and the Open-Industries SQLite runtime revision pinned in CI. See [the setup guide](docs/web-foundation.md) for the two services, Windows paths and account configuration.
 
 ```sh
-git clone https://github.com/isayahc/tower-defense.git
-cd tower-defense
 npm ci
+npm run dev
+```
+
+The web foundation opens at `http://127.0.0.1:3000`. Without an upstream checkout/service, it displays an integration error and keeps startup disabled. With the v2 service connected, users can register/sign in. The first processing API is available; full gameplay and its map/controls are still being built.
+
+```sh
 npm run demo:science
 npm run check
-```
-
-The demo evaluates a labeled test fixture: 10 kg of inspected cable becomes a plan for 5.7 kg of conductor, 3 kg of insulation, and 1.3 kg of residue at a cost of 10 kJ. It also shows that unknown material requires inspection. These are pure calculations, not a running match or a measured recycling result.
-
-`npm run check` runs formatting checks, lint, strict type checking, tests, and the TypeScript build. `npm run build` emits importable modules and CLI commands into `dist/`. `npm run dev` runs the science fixture; it does not start a game server. The CI workflow runs these checks on Linux and Windows.
-
-To discover an installed OpenIndustries checkout without invoking any mutating tool:
-
-```sh
 npm run discover:oi -- ../Open-Industries
+npm run test:integration
+npm run test:browser
+npm run build
+npm start
 ```
 
-Use its actual path, for example `C:/projects/Open-Industries`. Run `npm ci` in that checkout first. The discovery command launches its real `server/astra-mcp.mjs`, performs the MCP handshake, and lists advertised tools/resources. No account or provider key is needed for this read-only schema inspection. It exits **2** when discovery succeeds but the game contract is unsupported, and **1** when discovery fails; neither condition enables a local fallback. See [the captured result and limits](docs/discovery/README.md).
+`demo:science` is a pure calculation fixture, not a match. The fixture conserves 10 kg as 5.7 kg conductor, 3 kg insulation and 1.3 kg residue at 10 kJ; it does not award inventory or certify recovered grades. The broader science catalog is not yet integrated into runtime transactions.
 
-There is no browser game, match API, remote deployment, authentication layer, durable inventory, or combat runtime in this slice. In production, only OpenIndustries may load trusted batch evidence, invoke these calculations, and commit their results transactionally. Callers cannot treat a calculated plan as awarded material or a validated player command.
+`check` runs formatting, lint, type checking, tests and the production build. Integration/browser tests require `OI_CHECKOUT` in the environment and use temporary native SQLite databases. Install Chromium with `npx playwright install chromium` before browser tests. CI checks Linux/Windows and uploads browser screenshots.
+
+Discovery exits **2** while the full-game contract is incomplete, including when the SQLite processing contract is verified. No offline or client-owned simulation is available. The backend never creates material, advances time or resolves combat itself.

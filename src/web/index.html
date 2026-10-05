@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#151b18">
+  <title>City Dump — Tower Defense</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <header><a class="brand" href="/" aria-label="City Dump home"><span class="mark" aria-hidden="true">▥</span> CITY DUMP</a><span class="edition">TOWER DEFENSE / DEVELOPMENT</span></header>
+  <main>
+    <section class="intro" aria-labelledby="title"><p class="eyebrow">RECOVER. REBUILD. DEFEND.</p><h1 id="title">Tomorrow starts<br>in the scrap heap.</h1><p class="lede">Two crews. One city dump. Turn discarded materials into working industry—and eventually, a winning defense.</p></section>
+    <div class="workspace">
+      <section class="panel connection" aria-labelledby="connection-title">
+        <div class="panel-top"><span class="eyebrow">01 / SERVER CONNECTION</span><span id="badge" class="badge">CHECKING</span></div>
+        <h2 id="connection-title">Checking the runtime…</h2>
+        <p id="connection-message" role="status" aria-live="polite">Finding out what the server can support.</p>
+        <button id="retry" class="secondary" type="button" disabled>Check connection</button>
+        <div class="divider"></div>
+        <h3>Current foundation</h3>
+        <ul class="capabilities"><li><span class="dot"></span>Two-player invitations</li><li><span class="dot"></span>Private inspection and finite collection</li><li><span class="dot"></span>Persistent cable processing</li></ul>
+        <p class="note" id="capability-note">These features need a compatible, running server.</p>
+      </section>
+      <section class="panel account" aria-labelledby="account-title">
+        <div class="panel-top"><span class="eyebrow">02 / YOUR CREW</span><span id="account-badge" class="badge muted">SIGNED OUT</span></div>
+        <h2 id="account-title">Get ready to reclaim.</h2>
+        <p>Use your game account to connect to the runtime.</p>
+        <form id="login-form">
+          <label for="username">Username</label><input id="username" name="username" autocomplete="username" pattern="[a-zA-Z0-9_\-]{3,40}" minlength="3" maxlength="40" required disabled>
+          <label for="password">Password <span>12 characters minimum</span></label><input id="password" name="password" type="password" autocomplete="current-password" minlength="12" maxlength="256" required disabled>
+          <label class="checkbox" id="register-label" hidden><input id="register" type="checkbox"> Create a new account</label>
+          <button id="sign-in" type="submit" disabled>Sign in</button>
+        </form>
+        <div id="signed-in" hidden><p class="signed-message">Your account is connected. Processing commands use your own inventory and permissions.</p><button id="sign-out" class="secondary" type="button">Sign out</button></div>
+        <p id="account-message" class="note" role="status" aria-live="polite">Connect the server to sign in.</p>
+      </section>
+    </div>
+    <section class="next" aria-labelledby="next-title"><div><p class="eyebrow">THE NEXT MILESTONE</p><h2 id="next-title">A working reclamation loop.</h2><p>The processing runtime is the first step. The playable map, robot movement, manufacturing and combat are still being built.</p></div><button id="start-match" type="button" disabled aria-describedby="match-note">Start full match <span aria-hidden="true">↗</span></button><p id="match-note" class="note">Full matches are not available yet.</p></section>
+  </main>
+  <footer><span>CITY DUMP / BUILT ON OPEN-INDUSTRIES</span><span>Server-owned state. Persistent progress.</span></footer>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # OpenIndustries Integration Contract
 
-Status: the actual local stdio server has been started and its published schema captured. It advertises 13 room/scene tools and no game operations; see [discovery evidence](discovery/README.md). No remote game endpoint, authenticated scene mutation, or authoritative game flow has been verified. The matrix below remains the required game contract, not an implemented API mapping.
+Status: the actual SQLite v2 stdio server exposes 18 tools, including five game tools. Their exact schemas and static contract are verified by the adapter; see [discovery evidence](discovery/README.md) and [web architecture](web-foundation.md). Native local account, processing, ownership and reconnect paths are exercised through the real service/MCP boundary. Full-game support, the map/robot UI and external deployment remain outstanding. The matrix below describes the complete target; it is not a claim that the bounded processing runtime implements every row.
 
 ## Discovery Gate
 

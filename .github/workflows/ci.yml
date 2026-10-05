@@ -11,12 +11,40 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      OI_CHECKOUT: ${{ github.workspace }}/.integration/open-industries
     steps:
       - uses: actions/checkout@v4
+      - name: Check out the verified SQLite runtime
+        uses: actions/checkout@v4
+        with:
+          repository: Mapped-Assembly/Open-Industries
+          ref: 583c6fefd2e63cb49776f81d06d1b688b1bfd06f
+          path: .integration/open-industries
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            .integration/open-industries/package-lock.json
       - run: npm ci
+      - run: npm ci
+        working-directory: .integration/open-industries
       - run: npm run check
       - run: npm run demo:science
+      - run: npm run test:integration
+      - name: Install Chromium
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium
+      - name: Verify desktop and mobile browsers
+        if: runner.os == 'Linux'
+        run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always() && runner.os == 'Linux'
+        with:
+          name: web-foundation-browser-evidence
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
