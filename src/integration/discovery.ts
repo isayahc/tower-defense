@@ -4,6 +4,17 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { Resource, ResourceTemplate, Tool } from "@modelcontextprotocol/sdk/types.js";
 
+// SDK initialization failures start close() without awaiting it. Share that close
+// promise so our finally block also waits for the owned child process to exit.
+class DiscoveryTransport extends StdioClientTransport {
+  #closing: Promise<void> | undefined;
+
+  override close(): Promise<void> {
+    this.#closing ??= super.close();
+    return this.#closing;
+  }
+}
+
 export const GAME_REQUIREMENTS = [
   "Authenticated two-player membership and ownership",
   "Persistent server clock and restart recovery",
@@ -33,7 +44,7 @@ export async function discoverOpenIndustries(checkout: string, timeoutMs = 15_00
   const script = resolve(root, "server/astra-mcp.mjs");
   await access(script);
   const client = new Client({ name: "tower-defense-discovery", version: "0.1.0" });
-  const transport = new StdioClientTransport({
+  const transport = new DiscoveryTransport({
     command: process.execPath,
     args: [script],
     cwd: root,
@@ -114,5 +125,6 @@ export async function discoverOpenIndustries(checkout: string, timeoutMs = 15_00
     };
   } finally {
     await client.close();
+    await transport.close();
   }
 }

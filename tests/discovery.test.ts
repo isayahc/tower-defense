@@ -17,14 +17,17 @@ async function contractDouble(mode = "normal") {
   const root = await mkdtemp(join(tmpdir(), "tower-mcp-"));
   await mkdir(join(root, "server"));
   const trace = join(root, "calls.jsonl");
+  const pidFile = join(root, "child.pid");
   // Only test infrastructure. Returns the schema captured from the real OI process.
   await writeFile(
     join(root, "server/astra-mcp.mjs"),
     `
 import { createInterface } from 'node:readline';
-import { appendFileSync } from 'node:fs';
+import { appendFileSync, writeFileSync } from 'node:fs';
 const snapshot = ${JSON.stringify(captured)};
 const mode = ${JSON.stringify(mode)};
+writeFileSync(${JSON.stringify(pidFile)},String(process.pid));
+process.stdin.on('end',()=>{if(mode==='stall')setTimeout(()=>process.exit(0),100);});
 process.stderr.write('SENSITIVE_TEST_STDERR_MUST_NOT_ESCAPE');
 createInterface({input:process.stdin}).on('line',line=>{
   const request=JSON.parse(line);
@@ -43,7 +46,7 @@ createInterface({input:process.stdin}).on('line',line=>{
   process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:request.id,result})+'\\n');
 });`,
   );
-  return { root, trace, close: () => rm(root, { recursive: true, force: true }) };
+  return { root, trace, pidFile, close: () => rm(root, { recursive: true, force: true }) };
 }
 
 test("MCP discovery initializes the real published contract, follows pagination, and makes no tool mutations", async () => {
@@ -97,7 +100,9 @@ test("an unavailable or nonresponding server fails closed under a deadline", asy
   await assert.rejects(discoverOpenIndustries("/this-checkout-does-not-exist"));
   const server = await contractDouble("stall");
   try {
-    await assert.rejects(discoverOpenIndustries(server.root, 300));
+    await assert.rejects(discoverOpenIndustries(server.root, 1000));
+    const pid = Number(await readFile(server.pidFile, "utf8"));
+    assert.throws(() => process.kill(pid, 0), { code: "ESRCH" });
   } finally {
     await server.close();
   }
