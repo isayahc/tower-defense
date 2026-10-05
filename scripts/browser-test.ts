@@ -47,7 +47,14 @@ async function press(page: Page, name: string) {
 async function recover(page: Page) {
   await press(page, "Inspect cable");
   assert((await page.locator(".assay").textContent())?.includes("copper"));
+  const collected = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/runtime") &&
+      response.request().postDataJSON()?.args.action === "collect_deposit",
+  );
   await press(page, "Collect cable");
+  assert.equal((await collected).status(), 200);
+  await wait(page, "game-state", "LIVE");
   assert(await page.getByRole("button", { name: "Collect cable", exact: true }).isDisabled());
   await press(page, "Process cable · 20 s / 10 kJ");
 }
@@ -151,18 +158,96 @@ try {
   await wait(a, "match-status", "ACTIVE");
   assert.equal(await a.locator("#batches .batch").count(), 3);
   assert(await a.getByRole("button", { name: "Collect cable", exact: true }).isDisabled());
+  // The UI asks the authority for evidence and previews; no client-generated grades.
+  for (const page of [a, b]) {
+    const conductorId = await page
+      .locator("#science-target option")
+      .filter({ hasText: /^conductor/ })
+      .first()
+      .getAttribute("value");
+    assert(conductorId);
+    await page.getByLabel("Owned material or component").selectOption(conductorId);
+    await page.getByLabel("Design or recipe").selectOption("copper-conductor");
+    await press(page, "Check suitability");
+    assert((await page.locator("#science-result").textContent())?.includes("NEEDS_INSPECTION"));
+    await press(page, "Inspect conductor · 3 s / 300 J");
+    await page.waitForFunction(() =>
+      document.getElementById("science-version")?.textContent?.includes("1 saved observations"),
+    );
+    await press(page, "Check suitability");
+    assert(
+      (await page.locator("#science-result").textContent())?.includes(
+        "Eligible under this game design",
+      ),
+    );
+    assert((await page.locator("#batches").textContent())?.includes("45000000–49000000 S/m"));
+    await page.getByLabel("Operating temperature (°C)").fill("90");
+    await press(page, "Check suitability");
+    assert(
+      (await page.locator("#science-result").textContent())?.includes("PROPERTY_NOT_ESTABLISHED"),
+    );
+    await page.getByLabel("Operating temperature (°C)").fill("20");
+  }
+  await a.reload();
+  await wait(a, "match-status", "ACTIVE");
+  assert((await a.locator("#science-version").textContent())?.includes("1 saved observations"));
+  await press(a, "Test fastener · 3 s / 300 J");
+  await a.waitForFunction(() =>
+    document.getElementById("science-version")?.textContent?.includes("2 saved observations"),
+  );
+  await a.getByLabel("Evaluation", { exact: true }).selectOption("component");
+  await press(a, "Check suitability");
+  assert(
+    (await a.locator("#science-result").textContent())?.includes("Eligible under this game design"),
+  );
+  assert((await b.locator("#science-version").textContent())?.includes("1 saved observations"));
+  await press(a, "Inspect residue · 3 s / 300 J");
+  await a.waitForFunction(() =>
+    document.getElementById("science-version")?.textContent?.includes("3 saved observations"),
+  );
+  await a.getByLabel("Evaluation", { exact: true }).selectOption("process");
+  const residueId = await a
+    .locator("#science-target option")
+    .filter({ hasText: /^residue/ })
+    .getAttribute("value");
+  assert(residueId);
+  await a.getByLabel("Owned material or component").selectOption(residueId);
+  await a.getByLabel("Design or recipe").selectOption("recover-cable-residue");
+  await press(a, "Check suitability");
+  assert((await a.locator("#science-result").textContent())?.includes("residue:"));
+  await press(a, "Start approved process");
+  await a.waitForFunction(() =>
+    [...document.querySelectorAll("#jobs .job")].every(
+      (j) => j.getAttribute("data-state") === "completed",
+    ),
+  );
+  assert.equal(await a.locator("#batches .batch").count(), 4);
+  assert(await a.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  assert(await b.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await a.screenshot({ path: "test-results/world-desktop.png", fullPage: true });
   await b.screenshot({ path: "test-results/world-mobile.png", fullPage: true });
   await a.locator(".map-layout").screenshot({ path: "test-results/recovery-map.png" });
+  await a.locator(".science-panel").screenshot({ path: "test-results/material-lab-desktop.png" });
+  await b.locator(".science-panel").screenshot({ path: "test-results/material-lab-mobile.png" });
   await press(a, "Finish recovery session");
   await wait(a, "match-status", "ACTIVE");
-  await press(b, "Finish recovery session");
+  const finished = b.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/runtime") &&
+      response.request().postDataJSON()?.args.action === "finish_recovery",
+  );
+  await wait(b, "game-state", "LIVE");
+  // Hold through a polling interval: redraw must not swallow a user gesture.
+  await b
+    .getByRole("button", { name: "Finish recovery session", exact: true })
+    .click({ delay: 2200 });
+  assert.equal((await finished).status(), 200);
   await wait(a, "match-status", "COMPLETED");
   await wait(b, "match-status", "COMPLETED");
   assert((await a.locator("#lifecycle-note").textContent())?.includes("recovery complete"));
   assert.deepEqual(errors, []);
   console.log(
-    "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, pause/resume, logout/login, persisted depletion, completion, screenshots and no console errors",
+    "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, private evidence, reconnect, completion, screenshots and no console errors",
   );
 } catch (error) {
   for (const [i, context] of browser.contexts().entries())

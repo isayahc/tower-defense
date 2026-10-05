@@ -1,10 +1,12 @@
 import { isDeepStrictEqual } from "node:util";
 import { Ajv } from "ajv";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
-import captured from "./contract-v3.json" with { type: "json" };
+import captured from "./contract-v4.json" with { type: "json" };
 
 export const GAME_TOOLS = [
   "astra.game_describe",
+  "astra.game_science_catalog",
+  "astra.game_evaluate",
   "astra.game_list_matches",
   "astra.game_create_match",
   "astra.game_join_match",

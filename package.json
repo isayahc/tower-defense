@@ -19,12 +19,14 @@
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "start": "node --env-file-if-exists=.env dist/server/main.js",
     "test:browser": "node --import tsx scripts/browser-test.ts",
-    "test:integration": "node --import tsx scripts/integration-test.ts"
+    "test:integration": "node --import tsx scripts/integration-test.ts",
+    "check:materials": "node scripts/sync-material-science.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.0",
     "ajv": "8.17.1",
-    "zod": "^4.1.0"
+    "zod": "^4.1.0",
+    "@openindustries/material-science": "file:vendor/material-science"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

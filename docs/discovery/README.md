@@ -1,18 +1,19 @@
 # Open-Industries discovery evidence
 
-The current target is the **SQLite city-dump runtime v3** in `Mapped-Assembly/Open-Industries`, at `e8529035679f80ab1aa286fb07ac51032c9e2ff8` ([upstream PR #4](https://github.com/Mapped-Assembly/Open-Industries/pull/4)), pinned in `.github/workflows/ci.yml`. The capture in [openindustries-world-v3.json](openindustries-world-v3.json) comes from starting the actual stdio process, enumerating all **19 tools**, then calling the schema-verified, read-only `astra.game_describe` operation. It is not an invented API.
+The current target is the **SQLite city-dump runtime v4** in `Mapped-Assembly/Open-Industries`, at `70707824f0618eb07a3f583d08f1fecb854dc63c` ([upstream PR #5](https://github.com/Mapped-Assembly/Open-Industries/pull/5)), pinned in `.github/workflows/ci.yml`. The capture in [openindustries-science-v4.json](openindustries-science-v4.json) comes from starting the actual stdio process, enumerating all **21 tools**, then calling the schema-verified, read-only `astra.game_describe` operation. It is not an invented API.
 
-The [v2 capture](openindustries-runtime-v2.json) preserves the earlier SQLite processing foundation; the [13-tool capture](openindustries-local.json) records the original scene-only server. Both are historical evidence. Old servers and the Supabase/Postgres v1 contract are incompatible with this adapter. Neither can start a game here.
+The [v2 capture](openindustries-runtime-v2.json) preserves the earlier SQLite processing foundation; the [13-tool capture](openindustries-local.json) records the original scene-only server. The [v3 world capture](openindustries-world-v3.json) also remains historical evidence. Old servers and the Supabase/Postgres v1 contract are incompatible with this adapter. Neither can start a game here.
 
 ## Observed capability mapping
 
-| Requirement | Published v3 operation/evidence | Scope and gap |
+| Requirement | Published v4 operation/evidence | Scope and gap |
 | --- | --- | --- |
 | Identity and membership | `astra.game_create_match`, `astra.game_join_match`; SQLite account/session service | Two participants, renewable one-use invite; `astra.game_list_matches` restores owned memberships |
 | Private world | `astra.game_read_match` and strict snapshot schema | Fourteen finite deposits, shared roads/obstacles/outposts/towers, private cable assay and starter equipment/stock ledgers |
 | Inspection | `astra.game_command` / `inspect_deposit` | Server-issued cable assay; no range, occlusion or noisy robot sensing |
+| Material science | `astra.game_science_catalog`, `astra.game_evaluate`, `inspect_batch`, `inspect_component`, `start_material_process` | Pinned catalog, owned evidence, suitability/approved geometry, paid bench tests and residue reprocessing; no client-supplied properties |
 | Collection | `collect_deposit` | Atomic depletion and one batch; no travel, hauling or cargo limits |
-| Processing | `start_processing`, `pause_job`, `resume_job`, `cancel_job` | One powered, durable cable-separator recipe; broad science/manufacturing not yet integrated |
+| Processing | `start_processing`, `pause_job`, `resume_job`, `cancel_job` | Powered cable separation and residue recovery through the shared engine; other recipes explicitly require unavailable machines |
 | Machine/match recovery | `dismantle_machine`, `abandon_match` | Cancellation preserves material and energy spent |
 | Persistence and clock | SQLite WAL and independent runtime process | Service ticks without browsers/MCP; durable receipt and restart tests run in upstream CI |
 | Synchronization | `astra.game_read_match` | Full-snapshot polling; replace state; no event stream advertised |
@@ -28,6 +29,6 @@ The adapter validates successful outputs against the success branch; structured 
 
 `npm run discover:oi -- <checkout>` emits the report. Exit **2** still means the full game is unavailable, even when `processingContractVerified` and `canStartRecovery` are true. Exit **1** means discovery failed. No local simulation fallback is provided.
 
-`npm run test:integration` starts the real independent SQLite service, creates actual local accounts, drives the real MCP SDK through the HTTP boundary and verifies identity, privacy, strict inputs, receipts and revocation. `npm run test:browser` checks desktop/mobile rendering and two isolated Chromium sessions, clicks the create/join/inspect/collect/process controls, verifies invite renewal, pause/resume, logout/reconnect and mutual completion. These are production local SQLite paths, not authentication or database facades. A lost committed response is retried through the UI with the identical ID/payload. Only robot travel, broader science/manufacturing, combat and victory remain follow-up work.
+`npm run test:integration` starts the real independent SQLite service, creates actual local accounts, drives the real MCP SDK through the HTTP boundary and verifies identity, privacy, strict inputs, receipts and revocation. `npm run test:browser` checks desktop/mobile rendering and two isolated Chromium sessions, clicks the create/join/inspect/collect/process controls, verifies invite renewal, pause/resume, logout/reconnect, paid inspections, part suitability, component tests, residue recovery and mutual completion. These are production local SQLite paths, not authentication or database facades. A lost committed response is retried through the UI with the identical ID/payload. Only robot travel, new machines/manufacturing, combat and victory remain follow-up work.
 
 The material-calculation library remains pure. Authoritative inventory decisions execute inside Open-Industries transactions; the browser and tower-defense backend never tick, award material, certify properties or resolve combat.

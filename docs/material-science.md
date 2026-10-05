@@ -1,8 +1,19 @@
 # Material Science Engine Design
 
-Status: the pure calculation core is implemented in `src/science/`; the full authoritative engine below remains an implementation contract for [the game specification](../README.md). Current functions validate batches/recipes, evaluate supported part uses, project established batch knowledge, and calculate processing plans. They do not authenticate players, inspect real objects, schedule jobs, persist inventory, or commit outputs. Values labeled **balance fixture** are chosen for testing and are not measured recycling performance.
+Status: #5 is implemented as a bounded material engine in Open-Industries' SQLite authority. `@openindustries/material-science` is the canonical pure package; `src/science/` re-exports the exact vendored build for fixtures and tests. `npm run check:materials` compares every vendored file with the upstream revision pinned in CI. Live browser requests use server-owned IDs, evidence, recipes and machines; they cannot supply properties or grant stock.
 
-Run `npm run demo:science` for the cable example and `npm test` for verification. Six initial material families have explicit processing and candidate-part entries. Batch property evidence is supplied by the trusted caller; pure-element reference values are never automatically assigned to scrap. The fixture catalog's part thresholds, grades, recoveries, and timings require gameplay calibration and broader material validation before production. Server transactions, version pinning per match, real sensor observations, and component assembly are still outstanding.
+Matches persist `materials-v2`, `balance-v2` and `bench-v1`. The service validates batches, components, observations, recipes, part requirements and results; runs paid, durable bench tests; returns private suitability/process/substitution previews; and commits processing with SQLite reservations, receipts and conservation checks. Six material families have explicit catalog recovery/use paths. Only the installed cable separator executes processing today; other machine requirements are reported without granting equipment. Robot sensing, hauling, new machines and assembly/manufacturing remain later work.
+
+### Implemented evidence and balance rules
+
+- A bench job takes **3 seconds at 100 W (300 J)**. Its owner, target/revision, bench position, timestamp and properties are recorded privately. Cancellation returns the reserved batch and retains spent energy. Repeated tests are deterministic, so they do not accumulate independent random guesses.
+- A recovered pure-copper wire stream can receive the **game** grade `game-copper-v1`. Its `bench-v1/copper-wire-test-fixture` reports conductivity 47,000,000 S/m with a bounded interval of 45,000,000–49,000,000 S/m, and density 8,950 kg/m³ with bounds 8,800–9,100 kg/m³, both only at 20 °C. These are synthetic gameplay measurements, not material-reference claims or real instrument accuracy. Other stock retains unknown grade/properties unless a supported fixture establishes them.
+- Property approval uses the conservative interval bound. An unknown interval or one crossing a threshold needs more evidence; an unsupported grade, failed property or temperature limit gives an explicit reason. Reference data cannot be attached as batch evidence. Thermal conductivity has its own `W/(m*K)` unit and is not inferred from electrical conductivity.
+- Starter stock component records reference the existing component ledger: no additional bulk mass is granted. A 300 J functional test establishes compatibility with `starter-maintenance-v1` only. It does not unlock arbitrary battery/electronics salvage or assembly jobs.
+- The approved `aluminum-power-link-v1` substitution is a **game design** at 20 °C. From measured conductivity's lower bound it rounds the area needed to match a 2 mm², 40,000,000 S/m baseline upward to 0.01 mm². The 1 m / 10 A design has a 4 mm² envelope, uses density's upper bound to round required grams upward, reports resistance/loss, and requires `bimetal-terminal-v1`. This is a preview requiring inspected aluminum and a supported assembly; there is no universal metal swap or wiring certification.
+- `recover-cable-residue` recovers half the remaining copper, rounded down, using the separator at 500 W and 2 seconds/kg. Every remaining constituent stays in residue, including rounding remainder. Every output requires a fresh inspection; prior grade/property evidence is never copied to it.
+
+Run `npm run demo:science` for the cable fixture, `npm test` for pure validation, and the integration/browser commands in [web setup](web-foundation.md) for the real authority. Open-Industries runs the canonical core tests, 300 accounting cases, durable inspection/restart and nine successive residue passes, alongside existing transaction/concurrency tests. Gameplay thresholds and sensor fixtures still need playtesting; this engine does not certify engineering materials.
 
 ## Decisions and Evidence
 
@@ -14,7 +25,7 @@ An inspection establishes only the properties covered by that test. Visual inspe
 
 ## Domain Records
 
-These are proposed internal records, not MCP operation names. Implement validated TypeScript types and runtime schemas inside the authoritative service.
+These are domain records, not MCP operation names. The initial engine validates them in the authoritative service; spatial robot sensing and construction extend them later.
 
 | Record | Required information |
 | --- | --- |
@@ -112,7 +123,7 @@ When inputs and conditions are supported, simple dimensional relations can infor
 
 A melting point is not a safe service-temperature limit. Density alone does not establish armor performance; strength alone does not establish structural durability. Movement, cooling, durability, and combat use explicit part-specific game mappings separate from reference science.
 
-Return stable reason codes with readable text and next actions, such as `NEEDS_INSPECTION`, `WRONG_FORM`, `MIXED_POLYMERS`, `UNSUPPORTED_GRADE`, `TEMPERATURE_LIMIT`, `INSUFFICIENT_INPUT`, and `INSUFFICIENT_POWER`. These are proposed domain codes, not existing MCP response names.
+Return stable reason codes with readable text and next actions, such as `NEEDS_INSPECTION`, `WRONG_FORM`, `MIXED_POLYMERS`, `UNSUPPORTED_GRADE`, `TEMPERATURE_LIMIT`, `INSUFFICIENT_INPUT`, and `INSUFFICIENT_POWER`. These are domain decision codes inside `astra.game_evaluate` results, separate from transport errors.
 
 Research unlocks tools and recipes. It cannot change a material's conductivity, make unknown scrap pure, or turn ordinary glass into optical stock. New material entries need evidence and tests.
 
@@ -147,11 +158,11 @@ These rules execute within OpenIndustries or a verified server extension sharing
 | Power fails, client disconnects, server restarts | Resume energy, progress, reservations, and versions without duplication |
 | A factory is destroyed mid-job | Inputs, work in progress, salvage, and residue accounted for exactly once |
 
-Unit and deterministic property tests now cover the calculation core, including 300 varied constituent-accounting cases, repeated recovery, unknown-material projections, thermal limits, invalid inputs, and dimensional electrical losses. The complete table remains the acceptance target: concurrency, job persistence, authoritative ownership, sensor privacy across players, and exactly-once transactions require the missing OpenIndustries game runtime and have not been verified.
+Core and real SQLite tests cover 300 varied accounting cases, repeated recovery, unknown projections, thermal limits, invalid inputs, approved geometry, concurrent collection, durable jobs/inspections, ownership, private observations and exact receipts. The browser suite exercises two real sessions through inspection, suitability, temperature refusal, component testing and residue recovery. Robot collection, spatial sensor models, factory manufacturing and combat in this broader specification remain future work.
 
 ## Sources
 
-Checked on 2026-10-04. Sources support the physical rationale; none validates the game's balance fixtures or proposed implementation.
+Sources originally checked on 2026-10-04; S1/S2 reference anchors rechecked on 2026-10-05. Sources support the physical rationale; none validates the game's balance fixtures or proposed implementation.
 
 - **S1:** [Royal Society of Chemistry — Copper](https://periodic-table.rsc.org/element/29/copper): pure-element properties and uses.
 - **S2:** [Royal Society of Chemistry — Aluminum](https://periodic-table.rsc.org/element/13/aluminium): pure-element properties and distinction from alloys.

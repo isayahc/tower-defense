@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Mapped-Assembly/Open-Industries
-          ref: e8529035679f80ab1aa286fb07ac51032c9e2ff8
+          ref: 70707824f0618eb07a3f583d08f1fecb854dc63c
           path: .integration/open-industries
       - uses: actions/setup-node@v4
         with:
@@ -32,6 +32,7 @@ jobs:
       - run: npm ci
       - run: npm ci
         working-directory: .integration/open-industries
+      - run: npm run check:materials
       - run: npm run check
       - run: npm run demo:science
       - run: npm run test:integration
