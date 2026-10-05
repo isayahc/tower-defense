@@ -1,6 +1,6 @@
 # OpenIndustries Integration Contract
 
-Status: required capabilities, **not a verified live API mapping**. The repository supplies no target MCP URL, authentication configuration, or captured published schema. No live MCP connection has been verified for this game.
+Status: the actual local stdio server has been started and its published schema captured. It advertises 13 room/scene tools and no game operations; see [discovery evidence](discovery/README.md). No remote game endpoint, authenticated scene mutation, or authoritative game flow has been verified. The matrix below remains the required game contract, not an implemented API mapping.
 
 ## Discovery Gate
 

@@ -2,7 +2,9 @@
 
 A planned two-player strategy game where rival robot crews turn a city's discarded waste into working industry, defenses, and raiding units. Scan the dump, recover useful scrap, process it into usable materials, and destroy the opposing tower before your own falls.
 
-**Status: specification only.** There is no playable game or implemented science engine yet. This README is the authoritative product specification. [The science-engine design](docs/material-science.md) defines material rules; [the integration contract](docs/openindustries-contract.md) defines what must be verified against OpenIndustries before implementation.
+**Status: material-calculation core and MCP discovery implemented; no playable match yet.** The TypeScript core validates material batches, evaluates part suitability, and calculates processing plans with conserved mass and explicit energy. It does not own inventory or run a local game. The running OpenIndustries stdio server has been inspected: it currently exposes scene/room tools, not authoritative game operations. See the [discovery evidence and capability gaps](docs/discovery/README.md).
+
+This README is the product specification. [The science-engine design](docs/material-science.md) defines the intended full engine; [the integration contract](docs/openindustries-contract.md) defines the authoritative boundary still required for playable matches.
 
 ## The Setting
 
@@ -106,4 +108,28 @@ Before calling the game playable, verify two authenticated browser sessions from
 - Arbitrary chemistry, detailed battery recycling, semiconductor fabrication, and engineering certification.
 - An LLM acting as the authority for material identity, physics, inventory, or match results.
 
-There are currently no install, run, or deployment commands: implementation and live MCP verification are outstanding.
+## Run the Current Implementation
+
+Install Node.js **22.18 or newer** and Git. These commands also work in Windows PowerShell:
+
+```sh
+git clone https://github.com/isayahc/tower-defense.git
+cd tower-defense
+npm ci
+npm run demo:science
+npm run check
+```
+
+The demo evaluates a labeled test fixture: 10 kg of inspected cable becomes a plan for 5.7 kg of conductor, 3 kg of insulation, and 1.3 kg of residue at a cost of 10 kJ. It also shows that unknown material requires inspection. These are pure calculations, not a running match or a measured recycling result.
+
+`npm run check` runs formatting checks, lint, strict type checking, tests, and the TypeScript build. `npm run build` emits importable modules and CLI commands into `dist/`. `npm run dev` runs the science fixture; it does not start a game server. The CI workflow runs these checks on Linux and Windows.
+
+To discover an installed OpenIndustries checkout without invoking any mutating tool:
+
+```sh
+npm run discover:oi -- ../Open-Industries
+```
+
+Use its actual path, for example `C:/projects/Open-Industries`. Run `npm ci` in that checkout first. The discovery command launches its real `server/astra-mcp.mjs`, performs the MCP handshake, and lists advertised tools/resources. No account or provider key is needed for this read-only schema inspection. It exits **2** when discovery succeeds but the game contract is unsupported, and **1** when discovery fails; neither condition enables a local fallback. See [the captured result and limits](docs/discovery/README.md).
+
+There is no browser game, match API, remote deployment, authentication layer, durable inventory, or combat runtime in this slice. In production, only OpenIndustries may load trusted batch evidence, invoke these calculations, and commit their results transactionally. Callers cannot treat a calculated plan as awarded material or a validated player command.
