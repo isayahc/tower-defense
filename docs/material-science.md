@@ -1,6 +1,8 @@
 # Material Science Engine Design
 
-Status: proposed implementation contract for [the game specification](../README.md), not an implemented engine. Values labeled **balance fixture** are chosen for testing and are not measured recycling performance.
+Status: the pure calculation core is implemented in `src/science/`; the full authoritative engine below remains an implementation contract for [the game specification](../README.md). Current functions validate batches/recipes, evaluate supported part uses, project established batch knowledge, and calculate processing plans. They do not authenticate players, inspect real objects, schedule jobs, persist inventory, or commit outputs. Values labeled **balance fixture** are chosen for testing and are not measured recycling performance.
+
+Run `npm run demo:science` for the cable example and `npm test` for verification. Six initial material families have explicit processing and candidate-part entries. Batch property evidence is supplied by the trusted caller; pure-element reference values are never automatically assigned to scrap. The fixture catalog's part thresholds, grades, recoveries, and timings require gameplay calibration and broader material validation before production. Server transactions, version pinning per match, real sensor observations, and component assembly are still outstanding.
 
 ## Decisions and Evidence
 
@@ -145,7 +147,7 @@ These rules execute within OpenIndustries or a verified server extension sharing
 | Power fails, client disconnects, server restarts | Resume energy, progress, reservations, and versions without duplication |
 | A factory is destroyed mid-job | Inputs, work in progress, salvage, and residue accounted for exactly once |
 
-Use unit/property tests for units, catalog, conservation, recipes, and deterministic calculations; integration tests cover authority, visibility, and transactions. These are required tests, not a claim that an implementation currently passes them.
+Unit and deterministic property tests now cover the calculation core, including 300 varied constituent-accounting cases, repeated recovery, unknown-material projections, thermal limits, invalid inputs, and dimensional electrical losses. The complete table remains the acceptance target: concurrency, job persistence, authoritative ownership, sensor privacy across players, and exactly-once transactions require the missing OpenIndustries game runtime and have not been verified.
 
 ## Sources
 

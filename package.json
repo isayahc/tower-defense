@@ -1,0 +1,31 @@
+{
+  "name": "tower-defense",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "dev": "node --import tsx src/cli/science-demo.ts",
+    "demo:science": "node --import tsx src/cli/science-demo.ts",
+    "discover:oi": "node --import tsx src/cli/discover.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "5.9.3"
+  }
+}
