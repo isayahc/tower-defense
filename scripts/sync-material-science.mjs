@@ -15,11 +15,13 @@ const files = [
   ...(await readdir(join(source, "dist"))).sort().map((f) => `dist/${f}`),
 ];
 for (const file of files) {
-  const expected = await readFile(join(source, file));
+  // Git may check the upstream text out as CRLF on Windows. Compare its
+  // canonical LF representation; all other bytes must still agree.
+  const expected = (await readFile(join(source, file), "utf8")).replace(/\r\n/g, "\n");
   if (process.argv.includes("--write")) {
     await mkdir(resolve(target, file, ".."), { recursive: true });
     await writeFile(join(target, file), expected);
-  } else if (!(await readFile(join(target, file))).equals(expected))
+  } else if ((await readFile(join(target, file), "utf8")).replace(/\r\n/g, "\n") !== expected)
     throw new Error(`Material engine drift: ${file}`);
 }
 console.log(`Verified ${files.length} material package files against Open-Industries.`);
