@@ -15,6 +15,9 @@ const browser = await chromium.launch({
 const cleanups: Array<() => Promise<void>> = [() => browser.close()];
 let app: Awaited<ReturnType<typeof startApp>>;
 const errors: string[] = [];
+const responseChecks: Promise<void>[] = [];
+const unexpectedResponses: string[] = [];
+let signingOut = false;
 const password = "browser-test-password-123";
 async function wait(page: Page, id: string, text: string) {
   await page.waitForFunction(
@@ -40,10 +43,31 @@ async function signIn(page: Page, username: string, register: boolean) {
   assert((await page.context().cookies()).every((c) => c.httpOnly && c.sameSite === "Strict"));
 }
 async function press(page: Page, name: string) {
-  await wait(page, "game-state", "LIVE");
-  await page.getByRole("button", { name, exact: true }).click();
-  await wait(page, "game-state", "LIVE");
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await wait(page, "game-state", "LIVE");
+    const pending = page.waitForResponse((response) => {
+      if (!response.url().endsWith("/api/runtime")) return false;
+      const operation = response.request().postDataJSON()?.name;
+      return ![
+        "astra.game_read_match",
+        "astra.game_list_matches",
+        "astra.game_science_catalog",
+      ].includes(operation);
+    });
+    await page.getByRole("button", { name, exact: true }).click();
+    const response = await pending;
+    const result = await response.json();
+    await wait(page, "game-state", "LIVE");
+    if (response.status() === 409 && result.error?.code === "CONFLICT") {
+      // The UI has refreshed authoritative state; clicking again creates a new intent.
+      continue;
+    }
+    assert.equal(response.status(), 200, `${name}: ${JSON.stringify(result)}`);
+    return;
+  }
+  assert.fail(`${name}: repeated authoritative conflicts`);
 }
+
 async function recover(page: Page) {
   const requests: unknown[] = [];
   let dropped = false;
@@ -115,7 +139,44 @@ try {
   for (const page of [a, b]) {
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("console", (m) => {
-      if (m.type() === "error" && !m.text().includes("net::ERR_FAILED")) errors.push(m.text());
+      // Chromium resource-status messages are audited against their structured HTTP responses.
+      if (
+        m.type() === "error" &&
+        !m.text().includes("net::ERR_FAILED") &&
+        !/^Failed to load resource: the server responded with a status of \d+/.test(m.text())
+      )
+        errors.push(m.text());
+    });
+    page.on("response", (response) => {
+      if (response.status() < 400) return;
+      const duringSignOut = signingOut;
+      responseChecks.push(
+        (async () => {
+          const path = new URL(response.url()).pathname;
+          const body = await response.json().catch(() => null);
+          const request = response.request();
+          const input = request.method() === "POST" ? request.postDataJSON() : null;
+          const knownConflict =
+            path === "/api/runtime" &&
+            response.status() === 409 &&
+            body?.error?.code === "CONFLICT" &&
+            input?.name === "astra.game_command";
+          const revokedPoll =
+            duringSignOut &&
+            path === "/api/runtime" &&
+            response.status() === 401 &&
+            body?.error?.code === "AUTH_REQUIRED" &&
+            [
+              "astra.game_read_match",
+              "astra.game_list_matches",
+              "astra.game_science_catalog",
+            ].includes(input?.name);
+          if (!knownConflict && !revokedPoll)
+            unexpectedResponses.push(
+              JSON.stringify({ path, status: response.status(), input, body }),
+            );
+        })(),
+      );
     });
   }
   await a.goto(unconfigured.origin);
@@ -153,9 +214,11 @@ try {
   assert((await a.locator("#jobs").textContent())?.includes("paused"));
   await press(a, "Resume processing");
   await recover(b);
+  signingOut = true;
   await a.getByRole("button", { name: "Sign out", exact: true }).click();
   await wait(a, "account-badge", "SIGNED OUT");
   await signIn(a, "alice", false);
+  signingOut = false;
   await wait(a, "match-status", "ACTIVE");
   assert.equal(await a.locator("#match-id").textContent(), id);
   for (const page of [a, b]) {
@@ -285,6 +348,8 @@ try {
   await wait(a, "match-status", "COMPLETED");
   await wait(b, "match-status", "COMPLETED");
   assert((await a.locator("#lifecycle-note").textContent())?.includes("recovery complete"));
+  await Promise.all(responseChecks);
+  assert.deepEqual(unexpectedResponses, []);
   assert.deepEqual(errors, []);
   console.log(
     "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, private evidence, reconnect, completion, screenshots and no console errors",
