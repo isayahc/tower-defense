@@ -4,7 +4,7 @@ A small TypeScript/Node HTTP backend serves static HTML/CSS/JavaScript. It uses 
 
 ## Setup
 
-Install Node 22.18+ and both repositories with `npm ci`. Use Open-Industries v5 commit `d2d06853c38b53c548c0859f4a0c45e51476636b`, pinned in `.github/workflows/ci.yml`, from [upstream PR #43](https://github.com/Mapped-Assembly/Open-Industries/pull/43). In Open-Industries, create `.env` with `ASTRA_GAME_ALLOW_SIGNUP=true` and run `npm run game:server`. This creates its private SQLite file and starts autonomous ticks on loopback port 8790.
+Install Node 22.18+ and both repositories with `npm ci`. Use Open-Industries v5 commit `1a852f5a1fa6fc09b96c8871b62ce768a70ae077`, pinned in `.github/workflows/ci.yml`, from [upstream PR #43](https://github.com/Mapped-Assembly/Open-Industries/pull/43). In Open-Industries, create `.env` with `ASTRA_GAME_ALLOW_SIGNUP=true` and run `npm run game:server`. This creates its private SQLite file and starts autonomous ticks on loopback port 8790.
 
 In tower-defense, copy `.env.example` to `.env`, set `OI_CHECKOUT` to that installed checkout, and run `npm run dev`. Open **http://127.0.0.1:3000**. Windows PowerShell accepts forward slashes in the checkout path, for example `C:/projects/Open-Industries`.
 

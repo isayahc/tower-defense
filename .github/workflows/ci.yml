@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Mapped-Assembly/Open-Industries
-          ref: d2d06853c38b53c548c0859f4a0c45e51476636b
+          ref: 1a852f5a1fa6fc09b96c8871b62ce768a70ae077
           path: .integration/open-industries
       - uses: actions/setup-node@v4
         with:
