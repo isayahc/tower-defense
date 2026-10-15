@@ -17,7 +17,6 @@ let app: Awaited<ReturnType<typeof startApp>>;
 const errors: string[] = [];
 const responseChecks: Promise<void>[] = [];
 const unexpectedResponses: string[] = [];
-let signingOut = false;
 const password = "browser-test-password-123";
 async function wait(page: Page, id: string, text: string) {
   await page.waitForFunction(
@@ -149,7 +148,6 @@ try {
     });
     page.on("response", (response) => {
       if (response.status() < 400) return;
-      const duringSignOut = signingOut;
       responseChecks.push(
         (async () => {
           const path = new URL(response.url()).pathname;
@@ -161,17 +159,7 @@ try {
             response.status() === 409 &&
             body?.error?.code === "CONFLICT" &&
             input?.name === "astra.game_command";
-          const revokedPoll =
-            duringSignOut &&
-            path === "/api/runtime" &&
-            response.status() === 401 &&
-            body?.error?.code === "AUTH_REQUIRED" &&
-            [
-              "astra.game_read_match",
-              "astra.game_list_matches",
-              "astra.game_science_catalog",
-            ].includes(input?.name);
-          if (!knownConflict && !revokedPoll)
+          if (!knownConflict)
             unexpectedResponses.push(
               JSON.stringify({ path, status: response.status(), input, body }),
             );
@@ -214,11 +202,37 @@ try {
   assert((await a.locator("#jobs").textContent())?.includes("paused"));
   await press(a, "Resume processing");
   await recover(b);
-  signingOut = true;
+  // Hold a real background read: sign-out must stop new polls and wait, not hit the busy-session gate.
+  let releaseRead!: () => void;
+  let enteredRead!: () => void;
+  const readHeld = new Promise<void>((resolve) => {
+    enteredRead = resolve;
+  });
+  const release = new Promise<void>((resolve) => {
+    releaseRead = resolve;
+  });
+  let held = false;
+  await a.route("**/api/runtime", async (route) => {
+    if (!held && route.request().postDataJSON()?.name === "astra.game_read_match") {
+      held = true;
+      enteredRead();
+      await release;
+    }
+    await route.continue();
+  });
+  await readHeld;
+  const signedOut = a.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/session") && response.request().method() === "DELETE",
+  );
   await a.getByRole("button", { name: "Sign out", exact: true }).click();
+  await wait(a, "game-state", "DISCONNECTED");
+  assert.equal(await a.locator("#account-badge").textContent(), "SIGNED IN");
+  releaseRead();
+  assert.equal((await signedOut).status(), 200);
   await wait(a, "account-badge", "SIGNED OUT");
+  await a.unroute("**/api/runtime");
   await signIn(a, "alice", false);
-  signingOut = false;
   await wait(a, "match-status", "ACTIVE");
   assert.equal(await a.locator("#match-id").textContent(), id);
   for (const page of [a, b]) {
@@ -324,6 +338,8 @@ try {
     undefined,
     { timeout: 45000 },
   );
+  // Use a distant site so a real travel phase remains active while interruption is clicked.
+  await a.getByLabel("Select a waste site").selectOption({ label: "Crew 2 · glass" });
   await press(a, "Survey with camera-depth · robot 2");
   await press(a, "Interrupt · robot 2");
   await press(a, "Retreat and unload · robot 2");

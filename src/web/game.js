@@ -867,6 +867,12 @@ export function createGame(request) {
     if (access && snapshot && !busy && !pending && !interacting) void work(read, true);
   }, 2000);
   return {
+    async settleForSignOut() {
+      // Stop new polls and queued gestures before the backend revokes this session.
+      access = false;
+      controls();
+      while (busy) await new Promise((resolve) => idleWaiters.push(resolve));
+    },
     setAccess(connected, authenticated) {
       const next = connected && authenticated;
       if (next === access && authenticated) return;
