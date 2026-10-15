@@ -2,7 +2,7 @@
 
 A planned two-player strategy game where rival robot crews turn a city's discarded waste into working industry, defenses, and raiding units. Scan the dump, recover useful scrap, process it into usable materials, and destroy the opposing tower before your own falls.
 
-**Status: two-player recovery sessions, a finite city-dump map and browser processing controls are implemented; full combat matches remain in development.** The backend verifies the 21-tool Open-Industries v4 server, isolates browser sessions and exposes only eight reviewed game tools. The material lab adds authoritative bench evidence, suitability checks, component tests and residue recovery. The game stack uses SQLite and native game accounts, with no Supabase dependency. See [web setup](docs/web-foundation.md) and [discovery evidence](docs/discovery/README.md).
+**Status: two-player recovery sessions, authoritative robot survey/travel/hauling/charging, a finite city-dump map and browser processing controls are implemented; full combat matches remain in development.** The backend verifies the 21-tool Open-Industries v5 server, isolates browser sessions and exposes only eight reviewed game tools. The material lab adds authoritative bench evidence, suitability checks, component tests and residue recovery. The game stack uses SQLite and native game accounts, with no Supabase dependency. See [web setup](docs/web-foundation.md) and [discovery evidence](docs/discovery/README.md).
 
 This README is the product specification. [The science-engine design](docs/material-science.md) defines the intended full engine; [the integration contract](docs/openindustries-contract.md) defines the authoritative boundary still required for playable matches.
 
@@ -117,7 +117,7 @@ npm ci
 npm run dev
 ```
 
-The web foundation opens at `http://127.0.0.1:3000`. Without an upstream checkout/service, it displays an integration error and keeps startup disabled. With the v4 service connected, register/sign in, create a recovery session and invite one partner. Use the map to inspect, collect and process your private starter cable. Saved matches, depletion and jobs survive refresh/reconnect. Robots and fabricators are provisioned but parked; travel, manufacturing and combat remain later stages.
+The web foundation opens at `http://127.0.0.1:3000`. Without an upstream checkout/service, it displays an integration error and keeps startup disabled. With the v5 service connected, register/sign in, create a recovery session and invite one partner. Select a deposit, survey it with a robot, collect using the resulting evidence, and haul the load home for bench inspection and processing. Saved matches, depletion and jobs survive refresh/reconnect. Robots now execute persistent survey, collection, return, recharge, interrupt and retreat jobs. Fabricators, manufacturing and combat remain later stages.
 
 ```sh
 npm run demo:science
@@ -129,7 +129,7 @@ npm run build
 npm start
 ```
 
-`demo:science` is a pure calculation fixture, not a match. The fixture conserves 10 kg as 5.7 kg conductor, 3 kg insulation and 1.3 kg residue at 10 kJ; it does not award inventory or certify recovered grades. The broader science catalog is not yet integrated into runtime transactions.
+`demo:science` is a pure calculation fixture, not a match. The fixture conserves 10 kg as 5.7 kg conductor, 3 kg insulation and 1.3 kg residue at 10 kJ; it does not award inventory or certify recovered grades. Only installed machines execute catalog processes; additional machinery remains future work.
 
 `check` runs formatting, lint, type checking, tests and the production build. Integration/browser tests require `OI_CHECKOUT` in the environment and use temporary native SQLite databases. Install Chromium with `npx playwright install chromium` before browser tests. CI checks Linux/Windows and uploads browser screenshots.
 

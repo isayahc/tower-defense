@@ -14,7 +14,7 @@ export async function verifyRuntime(connection: RuntimeConnection) {
   const schema = await publishedSchema(connection.client);
   verifySchemas(schema.tools);
   const result = await connection.client.callTool(
-    { name: "astra.game_describe", arguments: { version: 4 } },
+    { name: "astra.game_describe", arguments: { version: 5 } },
     undefined,
     { timeout: 15000 },
   );

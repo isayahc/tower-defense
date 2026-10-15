@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       OI_CHECKOUT: ${{ github.workspace }}/.integration/open-industries
     steps:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Mapped-Assembly/Open-Industries
-          ref: 70707824f0618eb07a3f583d08f1fecb854dc63c
+          ref: 5e306c2033bfdb15510f98f575f937e1578f6a3f
           path: .integration/open-industries
       - uses: actions/setup-node@v4
         with:

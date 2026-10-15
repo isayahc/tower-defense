@@ -41,7 +41,7 @@
       <div class="section-title"><div><p class="eyebrow">03 / THE RECLAMATION YARD</p><h2 id="recovery-title">Put the dump to work.</h2></div><span id="game-state" class="badge">CONNECTING</span></div>
       <p id="game-message" role="status" aria-live="polite">Restoring your matches…</p><button type="button" id="retry-command" class="secondary" hidden>Retry pending command</button>
       <div class="lobby">
-        <section class="panel"><h3>Start a recovery session</h3><p>Invite one partner. Each crew gets equivalent equipment and a finite starter cable load.</p><button type="button" id="create-recovery" data-mutation="true">Create recovery session</button>
+        <section class="panel"><h3>Start a recovery session</h3><p>Invite one partner. Each crew gets equivalent equipment and finite scrap deposits.</p><button type="button" id="create-recovery" data-mutation="true">Create recovery session</button>
         <details class="join"><summary>Have an invitation?</summary><form id="join-form"><label for="join-match">Match ID</label><input id="join-match" required maxlength="36" pattern="[a-fA-F0-9\-]{36}"><label for="join-code">Invitation code</label><input id="join-code" required maxlength="36" pattern="[a-fA-F0-9\-]{36}"><button type="submit" id="join-button" data-mutation="true">Join recovery session</button></form></details></section>
         <section class="panel"><div class="panel-top"><h3>Your saved matches</h3><button type="button" id="refresh-list" class="secondary">Refresh list</button></div><div id="match-list"></div><button type="button" id="more-matches" class="secondary" disabled>More matches</button></section>
       </div>
@@ -53,6 +53,7 @@
           <section class="panel map-panel"><div class="panel-top"><p class="eyebrow">FINITE MUNICIPAL DUMP</p><span class="badge muted">96 × 56</span></div><svg id="dump-map" viewBox="0 0 96 56" aria-label="Shared dump map: bases, waste sites, service roads and neutral outposts" role="img"><title>Municipal dump map</title></svg><p class="map-legend"><span>◆ Bases</span><span>● Waste sites</span><span>□ Neutral outposts</span><span>▰ Service roads</span></p><label for="deposit-choice">Select a waste site</label><select id="deposit-choice"></select><div id="deposit-detail"></div></section>
           <section class="panel"><p class="eyebrow">YOUR PROCESSING BENCH</p><div class="power"><strong id="power-reading"></strong><p id="power-note" class="note"></p></div><h3>Recovered inventory</h3><div id="batches"></div><h3>Processing jobs</h3><div id="jobs"></div></section>
         </div>
+        <section class="panel"><h2>Robot dispatch</h2><p class="note">Choose a deposit on the map. Routes, progress and cargo come from the server.</p><div id="robots"></div></section>
         <section class="panel science-panel" aria-labelledby="science-heading">
           <p class="eyebrow">MATERIAL LAB</p><h3 id="science-heading">Inspect. Check. Recover.</h3>
           <p id="science-version" class="note"></p>
@@ -73,7 +74,7 @@
         <div class="session-actions"><button type="button" id="finish-recovery" data-mutation="true">Finish recovery session</button><button type="button" id="end-session" class="secondary" data-mutation="true">End session for both crews</button><p class="note">After both crews process their cable, both can finish to archive the session.</p></div>
       </section>
     </section>
-    <section class="next" aria-labelledby="next-title"><div><p class="eyebrow">BEYOND RECOVERY</p><h2 id="next-title">From scrap to strategy.</h2><p>Robot travel, broader material processing, manufacturing and combat are still being built. The recovery session is ready today.</p></div><button id="start-match" type="button" disabled aria-describedby="match-note">Start full match <span aria-hidden="true">↗</span></button><p id="match-note" class="note">Full matches are not available yet.</p></section>
+    <section class="next" aria-labelledby="next-title"><div><p class="eyebrow">BEYOND RECOVERY</p><h2 id="next-title">From scrap to strategy.</h2><p>Broader material processing, manufacturing and combat are still being built. The recovery session is ready today.</p></div><button id="start-match" type="button" disabled aria-describedby="match-note">Start full match <span aria-hidden="true">↗</span></button><p id="match-note" class="note">Full matches are not available yet.</p></section>
   </main>
   <footer><span>CITY DUMP / BUILT ON OPEN-INDUSTRIES</span><span>Server-owned state. Persistent progress.</span></footer>
 </body>

@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { Ajv } from "ajv";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
-import captured from "./contract-v4.json" with { type: "json" };
+import captured from "./contract-v5.json" with { type: "json" };
 
 export const GAME_TOOLS = [
   "astra.game_describe",
@@ -23,12 +23,21 @@ const validators = new Map(
   ]),
 );
 export const messages = {
+  ROBOT_REQUIRED: "Use a robot to survey and recover this deposit.",
+  ROBOT_BUSY: "Interrupt the current robot job or wait for completion.",
+  ROBOT_ENERGY: "Recharge the robot before dispatch; it needs enough energy to return.",
+  ROUTE_BLOCKED: "No accessible route exists for this job.",
+  STALE_TARGET: "Survey again; the deposit changed since this observation.",
+  CLASS_UNSUPPORTED: "Choose a material class supported by the observation.",
+  CARGO_FULL: "Return and unload before collecting more material.",
+  SENSOR_UNAVAILABLE: "This sensor is not installed on the robot.",
+  LEGACY_DEPOSIT: "Use the original recovery controls for this saved cable deposit.",
   AUTH_REQUIRED: "Sign in to your game account.",
   INVALID_REQUEST: "The request does not match the supported game contract.",
   CONTRACT_MISMATCH:
     "The runtime has an unsupported schema. Install the documented Open-Industries version.",
   FULL_GAME_UNSUPPORTED:
-    "Full matches are not available yet. Robot movement, manufacturing, combat and victory are still missing.",
+    "Full matches are not available yet. Manufacturing, combat and victory are still missing.",
   DISABLED: "The requested feature is disabled in the runtime configuration.",
   NOT_AVAILABLE: "The match, invitation or object is unavailable to this account.",
   CONFLICT: "State changed. Read a fresh snapshot before submitting a new command.",
