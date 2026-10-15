@@ -426,10 +426,10 @@ try {
   await a.locator(".map-layout").screenshot({ path: "test-results/recovery-map.png" });
   await a.locator(".science-panel").screenshot({ path: "test-results/material-lab-desktop.png" });
   await b.locator(".science-panel").screenshot({ path: "test-results/material-lab-mobile.png" });
-  await Promise.all([
-    recoverFamily(a, 1, "construction", "bench-recover-steel", "steel-bracket"),
-    recoverFamily(b, 2, "vehicle", "isolate-vehicle", "aluminum-housing"),
-  ]);
+  // A crew command invalidates the shared revision and clears the other crew's preview.
+  // Keep these approval/click flows sequential so neither test races a stale approval.
+  await recoverFamily(a, 1, "construction", "bench-recover-steel", "steel-bracket");
+  await recoverFamily(b, 2, "vehicle", "isolate-vehicle", "aluminum-housing");
   await press(a, "Return and recharge · robot 1");
   await a.waitForFunction(
     () => document.getElementById("robots")?.textContent?.includes("8.00 / 8 kJ"),
