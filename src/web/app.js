@@ -104,6 +104,8 @@ element("login-form").addEventListener("submit", async (event) => {
 element("sign-out").addEventListener("click", async () => {
   element("sign-out").disabled = true;
   try {
+    element("account-message").textContent = "Signing out…";
+    await game.settleForSignOut();
     await request("/api/session", { method: "DELETE" });
     authenticated = false;
     element("account-message").textContent = "Signed out.";

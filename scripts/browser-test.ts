@@ -15,6 +15,8 @@ const browser = await chromium.launch({
 const cleanups: Array<() => Promise<void>> = [() => browser.close()];
 let app: Awaited<ReturnType<typeof startApp>>;
 const errors: string[] = [];
+const responseChecks: Promise<void>[] = [];
+const unexpectedResponses: string[] = [];
 const password = "browser-test-password-123";
 async function wait(page: Page, id: string, text: string) {
   await page.waitForFunction(
@@ -40,10 +42,31 @@ async function signIn(page: Page, username: string, register: boolean) {
   assert((await page.context().cookies()).every((c) => c.httpOnly && c.sameSite === "Strict"));
 }
 async function press(page: Page, name: string) {
-  await wait(page, "game-state", "LIVE");
-  await page.getByRole("button", { name, exact: true }).click();
-  await wait(page, "game-state", "LIVE");
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await wait(page, "game-state", "LIVE");
+    const pending = page.waitForResponse((response) => {
+      if (!response.url().endsWith("/api/runtime")) return false;
+      const operation = response.request().postDataJSON()?.name;
+      return ![
+        "astra.game_read_match",
+        "astra.game_list_matches",
+        "astra.game_science_catalog",
+      ].includes(operation);
+    });
+    await page.getByRole("button", { name, exact: true }).click();
+    const response = await pending;
+    const result = await response.json();
+    await wait(page, "game-state", "LIVE");
+    if (response.status() === 409 && result.error?.code === "CONFLICT") {
+      // The UI has refreshed authoritative state; clicking again creates a new intent.
+      continue;
+    }
+    assert.equal(response.status(), 200, `${name}: ${JSON.stringify(result)}`);
+    return;
+  }
+  assert.fail(`${name}: repeated authoritative conflicts`);
 }
+
 async function recover(page: Page) {
   const requests: unknown[] = [];
   let dropped = false;
@@ -115,7 +138,33 @@ try {
   for (const page of [a, b]) {
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("console", (m) => {
-      if (m.type() === "error" && !m.text().includes("net::ERR_FAILED")) errors.push(m.text());
+      // Chromium resource-status messages are audited against their structured HTTP responses.
+      if (
+        m.type() === "error" &&
+        !m.text().includes("net::ERR_FAILED") &&
+        !/^Failed to load resource: the server responded with a status of \d+/.test(m.text())
+      )
+        errors.push(m.text());
+    });
+    page.on("response", (response) => {
+      if (response.status() < 400) return;
+      responseChecks.push(
+        (async () => {
+          const path = new URL(response.url()).pathname;
+          const body = await response.json().catch(() => null);
+          const request = response.request();
+          const input = request.method() === "POST" ? request.postDataJSON() : null;
+          const knownConflict =
+            path === "/api/runtime" &&
+            response.status() === 409 &&
+            body?.error?.code === "CONFLICT" &&
+            input?.name === "astra.game_command";
+          if (!knownConflict)
+            unexpectedResponses.push(
+              JSON.stringify({ path, status: response.status(), input, body }),
+            );
+        })(),
+      );
     });
   }
   await a.goto(unconfigured.origin);
@@ -153,8 +202,36 @@ try {
   assert((await a.locator("#jobs").textContent())?.includes("paused"));
   await press(a, "Resume processing");
   await recover(b);
+  // Hold a real background read: sign-out must stop new polls and wait, not hit the busy-session gate.
+  let releaseRead!: () => void;
+  let enteredRead!: () => void;
+  const readHeld = new Promise<void>((resolve) => {
+    enteredRead = resolve;
+  });
+  const release = new Promise<void>((resolve) => {
+    releaseRead = resolve;
+  });
+  let held = false;
+  await a.route("**/api/runtime", async (route) => {
+    if (!held && route.request().postDataJSON()?.name === "astra.game_read_match") {
+      held = true;
+      enteredRead();
+      await release;
+    }
+    await route.continue();
+  });
+  await readHeld;
+  const signedOut = a.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/session") && response.request().method() === "DELETE",
+  );
   await a.getByRole("button", { name: "Sign out", exact: true }).click();
+  await wait(a, "game-state", "DISCONNECTED");
+  assert.equal(await a.locator("#account-badge").textContent(), "SIGNED IN");
+  releaseRead();
+  assert.equal((await signedOut).status(), 200);
   await wait(a, "account-badge", "SIGNED OUT");
+  await a.unroute("**/api/runtime");
   await signIn(a, "alice", false);
   await wait(a, "match-status", "ACTIVE");
   assert.equal(await a.locator("#match-id").textContent(), id);
@@ -261,6 +338,8 @@ try {
     undefined,
     { timeout: 45000 },
   );
+  // Use a distant site so a real travel phase remains active while interruption is clicked.
+  await a.getByLabel("Select a waste site").selectOption({ label: "Crew 2 · glass" });
   await press(a, "Survey with camera-depth · robot 2");
   await press(a, "Interrupt · robot 2");
   await press(a, "Retreat and unload · robot 2");
@@ -285,6 +364,8 @@ try {
   await wait(a, "match-status", "COMPLETED");
   await wait(b, "match-status", "COMPLETED");
   assert((await a.locator("#lifecycle-note").textContent())?.includes("recovery complete"));
+  await Promise.all(responseChecks);
+  assert.deepEqual(unexpectedResponses, []);
   assert.deepEqual(errors, []);
   console.log(
     "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, private evidence, reconnect, completion, screenshots and no console errors",

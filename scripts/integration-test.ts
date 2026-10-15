@@ -36,7 +36,18 @@ async function call(cookie: string, name: string, args: unknown) {
 }
 try {
   const discovery = await discoverOpenIndustries(checkout);
-  assert.equal(discovery.tools.length, 21);
+  const installed = new Set(discovery.tools.map((tool) => tool.name));
+  for (const name of [
+    "describe",
+    "create_match",
+    "join_match",
+    "read_match",
+    "command",
+    "science_catalog",
+    "evaluate",
+  ])
+    assert(installed.has(`astra.game_${name}`), `Missing required game tool: ${name}`);
+  assert(installed.has("astra.simulation_describe"));
   assert.equal(discovery.readiness.processingContractVerified, true);
   assert.equal(discovery.readiness.canStartMatch, false);
   const a = await register("alice"),
