@@ -117,7 +117,7 @@ npm ci
 npm run dev
 ```
 
-The web foundation opens at `http://127.0.0.1:3000`. Without an upstream checkout/service, it displays an integration error and keeps startup disabled. With the v4 service connected, register/sign in, create a recovery session and invite one partner. Select a deposit, survey it with a robot, collect using the resulting evidence, and haul the load home for bench inspection and processing. Saved matches, depletion and jobs survive refresh/reconnect. Robots now execute persistent survey, collection, return, recharge, interrupt and retreat jobs. Fabricators, manufacturing and combat remain later stages.
+The web foundation opens at `http://127.0.0.1:3000`. Without an upstream checkout/service, it displays an integration error and keeps startup disabled. With the v5 service connected, register/sign in, create a recovery session and invite one partner. Select a deposit, survey it with a robot, collect using the resulting evidence, and haul the load home for bench inspection and processing. Saved matches, depletion and jobs survive refresh/reconnect. Robots now execute persistent survey, collection, return, recharge, interrupt and retreat jobs. Fabricators, manufacturing and combat remain later stages.
 
 ```sh
 npm run demo:science
