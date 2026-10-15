@@ -1,6 +1,6 @@
 # Open-Industries discovery evidence
 
-The current target is the **SQLite city-dump runtime v5** in `Mapped-Assembly/Open-Industries`, at `b08c93820192d879d6a2ede52001cc43715baca2` ([upstream PR #40](https://github.com/Mapped-Assembly/Open-Industries/pull/40)), pinned in `.github/workflows/ci.yml`. It integrates the native robot/material policies with shared command transactions and authorized history. The [current discovery summary](openindustries-shared-v5.json) records the actual stdio tool names, exact-schema verification result and a SHA-256 of the complete discovery report. The server now advertises **26 tools**, including five neutral work-cell tools. Game discovery still compares every required game input/output schema exactly; extra unrelated tools do not grant game authority.
+The current target is the **SQLite city-dump runtime v5** in `Mapped-Assembly/Open-Industries`, at `6a739d673b82ca371334d5ea02692f65de213cda` ([upstream PR #41](https://github.com/Mapped-Assembly/Open-Industries/pull/41)), pinned in `.github/workflows/ci.yml`. It stores native recovery in the shared simulation envelope, with bounded event scheduling, balanced resource accounting, command transactions and authorized history. Wire v5 remains unchanged. The [current discovery summary](openindustries-shared-v5.json) records the actual stdio tool names, exact-schema verification result and a SHA-256 of the complete discovery report. The server now advertises **26 tools**, including five neutral work-cell tools. Game discovery still compares every required game input/output schema exactly; extra unrelated tools do not grant game authority.
 
 The [robot-v5 capture](openindustries-robots-v5.json) remains historical evidence from the earlier separate robot branch (`5e306c2033bfdb15510f98f575f937e1578f6a3f`), when 21 tools were installed.
 
@@ -37,9 +37,9 @@ The material-calculation library remains pure. Authoritative inventory decisions
 
 The service adds an authorized server-to-server history endpoint. The game client continues
 to replace full polled snapshots; neutral work-cell tools are not exposed through its HTTP
-action allowlist. Native robot/process progression remains domain-specific: generic job/
-resource-envelope conversion is still upstream #33. This pin proves compatible native v5
-behavior on shared authority/commands/history, not a completed generic scheduler migration.
+action allowlist. Native routes, rates and outcomes remain domain policy. Jobs, observations and resources
+now use the shared envelope, common event clock and ledger. The client still supplies no
+simulation time, progress or resource effects.
 
 Local HTTP/MCP integration and the complete client check pass against this pin. The local
 Chromium/headless-shell downloads were truncated, so browser acceptance is determined by

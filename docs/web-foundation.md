@@ -4,7 +4,7 @@ A small TypeScript/Node HTTP backend serves static HTML/CSS/JavaScript. It uses 
 
 ## Setup
 
-Install Node 22.18+ and both repositories with `npm ci`. Use Open-Industries v5 commit `b08c93820192d879d6a2ede52001cc43715baca2`, pinned in `.github/workflows/ci.yml`, from [upstream PR #40](https://github.com/Mapped-Assembly/Open-Industries/pull/40). In Open-Industries, create `.env` with `ASTRA_GAME_ALLOW_SIGNUP=true` and run `npm run game:server`. This creates its private SQLite file and starts autonomous ticks on loopback port 8790.
+Install Node 22.18+ and both repositories with `npm ci`. Use Open-Industries v5 commit `6a739d673b82ca371334d5ea02692f65de213cda`, pinned in `.github/workflows/ci.yml`, from [upstream PR #41](https://github.com/Mapped-Assembly/Open-Industries/pull/41). In Open-Industries, create `.env` with `ASTRA_GAME_ALLOW_SIGNUP=true` and run `npm run game:server`. This creates its private SQLite file and starts autonomous ticks on loopback port 8790.
 
 In tower-defense, copy `.env.example` to `.env`, set `OI_CHECKOUT` to that installed checkout, and run `npm run dev`. Open **http://127.0.0.1:3000**. Windows PowerShell accepts forward slashes in the checkout path, for example `C:/projects/Open-Industries`.
 
@@ -59,7 +59,7 @@ npm run test:browser
 
 The map has seven finite waste categories per starting area, roads, blocking scrap walls, neutral outposts and towers. Grid travel runs at four cells per second on traversable ground, including service roads; no road speed bonus or capture access rule exists yet. The shared dump is accessible to either crew. Full combat/capture remains disabled. Older saves retain their original instant starter-cable recovery controls; new sessions require robots.
 
-The v5 runtime requires SQLite schema 4. Back up the database and upgrade the runtime and client together. Its migration preserves old materials, receipts and progress and records added probe allocations; it does not reroll deposits. Use the exact pinned runtime until the prerequisite runtime PRs reach main.
+The v5 runtime now requires SQLite schema 5. Its atomic envelope migration preserves native IDs, inventory, paid work, observations, version pins and immutable receipt bytes. Earlier science/robot upgrades run once when needed. Back up the complete SQLite database, including history and cursor keys, before upgrading. Returning to an older binary requires the complete pre-upgrade backup; never combine old inventory with newer receipts. Use the exact pinned runtime while upstream PR #41 is under review.
 
 Polling every two seconds replaces the current snapshot. A failed connection marks the view stale and disables mutations; **Reconnect match** refreshes it. A mutation with an uncertain outcome retains its exact command in memory and exposes **Retry pending command**; it blocks new work until resolved. Conflict responses refresh state and require an explicit new action. Reloading drops pending in-memory commands: inspect the restored membership/inventory/job state before issuing new work.
 
