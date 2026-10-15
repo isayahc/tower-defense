@@ -39,7 +39,9 @@
       "cargo-hauling",
       "shared-power-charging",
       "interrupt-retreat",
-      "sensor-upgrade-catalog"
+      "sensor-upgrade-catalog",
+      "all-initial-waste-recovery",
+      "cold-hazard-isolation"
     ],
     "unsupported": [
       "sensor-kit-manufacturing",
@@ -313,8 +315,164 @@
                         }
                       ],
                       "basis": "game-balance-fixture"
+                    },
+                    {
+                      "id": "bench-recover-steel",
+                      "version": "balance-v2",
+                      "target": "steel",
+                      "inputForms": ["mixed", "scrap"],
+                      "minimumPurityBps": 9000,
+                      "machine": "starter-recovery-cell",
+                      "minimumTemperatureC": null,
+                      "powerW": 500,
+                      "millisecondsPerKg": 2000,
+                      "outputs": [
+                        {
+                          "id": "usable",
+                          "form": "stock",
+                          "routes": [
+                            {
+                              "material": "steel",
+                              "numerator": 49,
+                              "denominator": 50
+                            }
+                          ]
+                        }
+                      ],
+                      "basis": "game-balance-fixture"
+                    },
+                    {
+                      "id": "bench-trim-hdpe",
+                      "version": "balance-v2",
+                      "target": "hdpe",
+                      "inputForms": ["mixed", "scrap", "flakes"],
+                      "minimumPurityBps": 9000,
+                      "machine": "starter-recovery-cell",
+                      "minimumTemperatureC": null,
+                      "powerW": 500,
+                      "millisecondsPerKg": 2000,
+                      "outputs": [
+                        {
+                          "id": "usable",
+                          "form": "stock",
+                          "routes": [
+                            {
+                              "material": "hdpe",
+                              "numerator": 9,
+                              "denominator": 10
+                            }
+                          ]
+                        }
+                      ],
+                      "basis": "game-balance-fixture"
+                    },
+                    {
+                      "id": "bench-sort-glass",
+                      "version": "balance-v2",
+                      "target": "glass",
+                      "inputForms": ["mixed", "scrap"],
+                      "minimumPurityBps": 9000,
+                      "machine": "starter-recovery-cell",
+                      "minimumTemperatureC": null,
+                      "powerW": 500,
+                      "millisecondsPerKg": 2000,
+                      "outputs": [
+                        {
+                          "id": "usable",
+                          "form": "granulate",
+                          "routes": [
+                            {
+                              "material": "glass",
+                              "numerator": 19,
+                              "denominator": 20
+                            }
+                          ]
+                        }
+                      ],
+                      "basis": "game-balance-fixture"
+                    },
+                    {
+                      "id": "bench-cut-tire",
+                      "version": "balance-v2",
+                      "target": "rubber",
+                      "inputForms": ["mixed", "scrap"],
+                      "minimumPurityBps": 9000,
+                      "machine": "starter-recovery-cell",
+                      "minimumTemperatureC": null,
+                      "powerW": 500,
+                      "millisecondsPerKg": 2000,
+                      "outputs": [
+                        {
+                          "id": "usable",
+                          "form": "tread",
+                          "routes": [
+                            {
+                              "material": "rubber",
+                              "numerator": 9,
+                              "denominator": 10
+                            }
+                          ]
+                        }
+                      ],
+                      "basis": "game-balance-fixture"
+                    },
+                    {
+                      "id": "isolate-appliance",
+                      "version": "balance-v2",
+                      "target": "steel",
+                      "inputForms": ["mixed", "scrap"],
+                      "minimumPurityBps": 6000,
+                      "machine": "starter-recovery-cell",
+                      "minimumTemperatureC": null,
+                      "powerW": 500,
+                      "millisecondsPerKg": 2000,
+                      "outputs": [
+                        {
+                          "id": "usable",
+                          "form": "stock",
+                          "routes": [
+                            {
+                              "material": "steel",
+                              "numerator": 19,
+                              "denominator": 20
+                            }
+                          ]
+                        }
+                      ],
+                      "basis": "game-balance-fixture"
+                    },
+                    {
+                      "id": "isolate-vehicle",
+                      "version": "balance-v2",
+                      "target": "aluminum",
+                      "inputForms": ["mixed", "scrap"],
+                      "minimumPurityBps": 6000,
+                      "machine": "starter-recovery-cell",
+                      "minimumTemperatureC": null,
+                      "powerW": 500,
+                      "millisecondsPerKg": 2000,
+                      "outputs": [
+                        {
+                          "id": "usable",
+                          "form": "stock",
+                          "routes": [
+                            {
+                              "material": "aluminum",
+                              "numerator": 19,
+                              "denominator": 20
+                            }
+                          ]
+                        }
+                      ],
+                      "basis": "game-balance-fixture"
                     }
                   ],
+                  "recovery": {
+                    "version": "starter-recovery-v1",
+                    "equipment": "existing-bench-and-separator",
+                    "maximum_temperature_c": 20,
+                    "scope": "cold-sorting-trimming-and-isolation-not-manufacturing"
+                  },
                   "parts": [
                     {
                       "id": "copper-conductor",
@@ -1166,7 +1324,9 @@
                   "cargo-hauling",
                   "shared-power-charging",
                   "interrupt-retreat",
-                  "sensor-upgrade-catalog"
+                  "sensor-upgrade-catalog",
+                  "all-initial-waste-recovery",
+                  "cold-hazard-isolation"
                 ]
               },
               "unsupported": {
@@ -2804,7 +2964,16 @@
                           "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
                         },
                         "form": {
-                          "enum": ["cable", "wire", "flakes", "residue", "mixed"]
+                          "enum": [
+                            "cable",
+                            "wire",
+                            "flakes",
+                            "residue",
+                            "mixed",
+                            "stock",
+                            "granulate",
+                            "tread"
+                          ]
                         },
                         "state": {
                           "enum": ["available", "reserved", "consumed"]
@@ -2875,7 +3044,7 @@
                         "output_role": {
                           "anyOf": [
                             {
-                              "enum": ["conductor", "insulation", "residue"]
+                              "enum": ["conductor", "insulation", "residue", "usable"]
                             },
                             {
                               "type": "null"
@@ -2925,11 +3094,17 @@
                             "strip-cable",
                             "recover-cable-residue",
                             "inspect-batch",
-                            "inspect-component"
+                            "inspect-component",
+                            "bench-recover-steel",
+                            "bench-trim-hdpe",
+                            "bench-sort-glass",
+                            "bench-cut-tire",
+                            "isolate-appliance",
+                            "isolate-vehicle"
                           ]
                         },
                         "recipe_version": {
-                          "enum": ["dump-v1", "balance-v2", "bench-v1"]
+                          "enum": ["dump-v1", "balance-v2", "bench-v1", "starter-recovery-v1"]
                         },
                         "state": {
                           "enum": ["running", "paused", "completed", "cancelled"]
@@ -4633,7 +4808,16 @@
                           "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
                         },
                         "form": {
-                          "enum": ["cable", "wire", "flakes", "residue", "mixed"]
+                          "enum": [
+                            "cable",
+                            "wire",
+                            "flakes",
+                            "residue",
+                            "mixed",
+                            "stock",
+                            "granulate",
+                            "tread"
+                          ]
                         },
                         "state": {
                           "enum": ["available", "reserved", "consumed"]
@@ -4704,7 +4888,7 @@
                         "output_role": {
                           "anyOf": [
                             {
-                              "enum": ["conductor", "insulation", "residue"]
+                              "enum": ["conductor", "insulation", "residue", "usable"]
                             },
                             {
                               "type": "null"
@@ -4754,11 +4938,17 @@
                             "strip-cable",
                             "recover-cable-residue",
                             "inspect-batch",
-                            "inspect-component"
+                            "inspect-component",
+                            "bench-recover-steel",
+                            "bench-trim-hdpe",
+                            "bench-sort-glass",
+                            "bench-cut-tire",
+                            "isolate-appliance",
+                            "isolate-vehicle"
                           ]
                         },
                         "recipe_version": {
-                          "enum": ["dump-v1", "balance-v2", "bench-v1"]
+                          "enum": ["dump-v1", "balance-v2", "bench-v1", "starter-recovery-v1"]
                         },
                         "state": {
                           "enum": ["running", "paused", "completed", "cancelled"]
@@ -6450,7 +6640,16 @@
                           "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
                         },
                         "form": {
-                          "enum": ["cable", "wire", "flakes", "residue", "mixed"]
+                          "enum": [
+                            "cable",
+                            "wire",
+                            "flakes",
+                            "residue",
+                            "mixed",
+                            "stock",
+                            "granulate",
+                            "tread"
+                          ]
                         },
                         "state": {
                           "enum": ["available", "reserved", "consumed"]
@@ -6521,7 +6720,7 @@
                         "output_role": {
                           "anyOf": [
                             {
-                              "enum": ["conductor", "insulation", "residue"]
+                              "enum": ["conductor", "insulation", "residue", "usable"]
                             },
                             {
                               "type": "null"
@@ -6571,11 +6770,17 @@
                             "strip-cable",
                             "recover-cable-residue",
                             "inspect-batch",
-                            "inspect-component"
+                            "inspect-component",
+                            "bench-recover-steel",
+                            "bench-trim-hdpe",
+                            "bench-sort-glass",
+                            "bench-cut-tire",
+                            "isolate-appliance",
+                            "isolate-vehicle"
                           ]
                         },
                         "recipe_version": {
-                          "enum": ["dump-v1", "balance-v2", "bench-v1"]
+                          "enum": ["dump-v1", "balance-v2", "bench-v1", "starter-recovery-v1"]
                         },
                         "state": {
                           "enum": ["running", "paused", "completed", "cancelled"]
@@ -8970,7 +9175,16 @@
                           "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
                         },
                         "form": {
-                          "enum": ["cable", "wire", "flakes", "residue", "mixed"]
+                          "enum": [
+                            "cable",
+                            "wire",
+                            "flakes",
+                            "residue",
+                            "mixed",
+                            "stock",
+                            "granulate",
+                            "tread"
+                          ]
                         },
                         "state": {
                           "enum": ["available", "reserved", "consumed"]
@@ -9041,7 +9255,7 @@
                         "output_role": {
                           "anyOf": [
                             {
-                              "enum": ["conductor", "insulation", "residue"]
+                              "enum": ["conductor", "insulation", "residue", "usable"]
                             },
                             {
                               "type": "null"
@@ -9091,11 +9305,17 @@
                             "strip-cable",
                             "recover-cable-residue",
                             "inspect-batch",
-                            "inspect-component"
+                            "inspect-component",
+                            "bench-recover-steel",
+                            "bench-trim-hdpe",
+                            "bench-sort-glass",
+                            "bench-cut-tire",
+                            "isolate-appliance",
+                            "isolate-vehicle"
                           ]
                         },
                         "recipe_version": {
-                          "enum": ["dump-v1", "balance-v2", "bench-v1"]
+                          "enum": ["dump-v1", "balance-v2", "bench-v1", "starter-recovery-v1"]
                         },
                         "state": {
                           "enum": ["running", "paused", "completed", "cancelled"]

@@ -532,7 +532,7 @@ export function createGame(request) {
             .filter((b) => b.state !== "consumed")
             .map((b) => [
               b.id,
-              `${b.output_role ?? "cable"} · ${kg(b.mass_g)} · ${b.id.slice(0, 8)}`,
+              `${b.output_role ?? b.form} · ${kg(b.mass_g)} · ${b.id.slice(0, 8)}`,
             ]),
     );
     if (scienceCatalog) {
@@ -693,7 +693,7 @@ export function createGame(request) {
       row.append(
         node(
           "p",
-          `${batch.state} · ${evidence?.grade ?? batch.grade}\n${batch.copper_g === null ? "Composition unknown; bench inspection required." : `Cu ${kg(batch.copper_g)} / HDPE ${kg(batch.hdpe_g)} / dirt ${kg(batch.dirt_g)}`}`,
+          `${batch.state} · ${evidence?.grade ?? batch.grade}\n${evidence?.inspection === "graded" ? evidence.constituents.map((c) => `${c.material} ${kg(c.massG)}`).join(" / ") : "Composition unknown; bench inspection required."}`,
           "note",
         ),
       );
@@ -710,6 +710,28 @@ export function createGame(request) {
             ),
           );
       }
+      if (evidence?.inspection === "graded" && evidence.hazard !== "none-detected")
+        row.append(
+          node(
+            "p",
+            "Suspect battery/electronic material: use the matching isolation route; ordinary processing is refused.",
+            "note",
+          ),
+        );
+      if (batch.form !== "cable")
+        row.append(
+          button(
+            "Review recovery routes",
+            () => {
+              el("science-query").value = "process";
+              clearEvaluation();
+              renderScience();
+              el("science-target").value = batch.id;
+              el("science-design").focus();
+            },
+            batch.state === "available",
+          ),
+        );
       if (batch.form !== "cable" || batch.copper_g === null)
         row.append(
           button(

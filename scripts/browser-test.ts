@@ -123,6 +123,100 @@ async function recover(page: Page) {
   await press(page, "Process cable · 20 s / 10 kJ");
 }
 
+/** Recover and use non-cable material through real desktop/mobile controls and server previews. */
+async function recoverFamily(page: Page, slot: number, kind: string, recipe: string, use: string) {
+  await press(page, "Return and recharge · robot 1");
+  await page.waitForFunction(
+    () => {
+      const text = document.querySelector("#robots > .job")?.textContent ?? "";
+      return text.includes("8.00 / 8 kJ") && text.includes("Ready for dispatch");
+    },
+    undefined,
+    { timeout: 45000 },
+  );
+  await page.getByLabel("Select a waste site").selectOption({ label: `Crew ${slot} · ${kind}` });
+  await press(page, "Survey with camera-depth · robot 1");
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll("#robots button")].some(
+        (b) =>
+          b.textContent === "Collect unclassified · robot 1" && !(b as HTMLButtonElement).disabled,
+      ),
+    undefined,
+    { timeout: 45000 },
+  );
+  const before = await page.locator("#batches .batch").count();
+  await press(page, "Collect unclassified · robot 1");
+  await page.waitForFunction(
+    (n) => document.querySelectorAll("#batches .batch").length === n + 1,
+    before,
+    { timeout: 45000 },
+  );
+  const input = await page
+    .locator("#science-target option")
+    .filter({ hasText: /^mixed/ })
+    .getAttribute("value");
+  assert(input);
+  await press(page, "Inspect recovered batch · 3 s / 300 J");
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll("#jobs .job")].every(
+        (j) => j.getAttribute("data-state") === "completed",
+      ),
+    undefined,
+    { timeout: 45000 },
+  );
+  if (kind === "vehicle")
+    assert((await page.locator("#batches").textContent())?.includes("Suspect battery/electronic"));
+  await page.getByLabel("Evaluation", { exact: true }).selectOption("process");
+  await page.getByLabel("Owned material or component").selectOption(input);
+  await page.getByLabel("Design or recipe").selectOption(recipe);
+  await press(page, "Check suitability");
+  assert(
+    (await page.locator("#science-result").textContent())?.includes(
+      "Eligible under this game design",
+    ),
+  );
+  await press(page, "Start approved process");
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll("#jobs .job")].every(
+        (j) => j.getAttribute("data-state") === "completed",
+      ),
+    undefined,
+    { timeout: 45000 },
+  );
+  const usable = await page
+    .locator("#science-target option")
+    .filter({ hasText: /^usable/ })
+    .getAttribute("value");
+  assert(usable);
+  await press(page, "Inspect usable · 3 s / 300 J");
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll("#jobs .job")].every(
+        (j) => j.getAttribute("data-state") === "completed",
+      ),
+    undefined,
+    { timeout: 45000 },
+  );
+  await page.getByLabel("Evaluation", { exact: true }).selectOption("use");
+  await page.getByLabel("Owned material or component").selectOption(usable);
+  await page.getByLabel("Design or recipe").selectOption(use);
+  await page.getByLabel("Operating temperature (°C)").fill("20");
+  await press(page, "Check suitability");
+  assert(
+    (await page.locator("#science-result").textContent())?.includes(
+      "Eligible under this game design",
+    ),
+  );
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.screenshot({
+    path: `test-results/${kind}-recovery-${page.viewportSize()?.width}.png`,
+    fullPage: true,
+  });
+}
+
 try {
   const runtime = await launchRuntime(checkout);
   cleanups.push(() => runtime.close());
@@ -332,6 +426,10 @@ try {
   await a.locator(".map-layout").screenshot({ path: "test-results/recovery-map.png" });
   await a.locator(".science-panel").screenshot({ path: "test-results/material-lab-desktop.png" });
   await b.locator(".science-panel").screenshot({ path: "test-results/material-lab-mobile.png" });
+  // A crew command invalidates the shared revision and clears the other crew's preview.
+  // Keep these approval/click flows sequential so neither test races a stale approval.
+  await recoverFamily(a, 1, "construction", "bench-recover-steel", "steel-bracket");
+  await recoverFamily(b, 2, "vehicle", "isolate-vehicle", "aluminum-housing");
   await press(a, "Return and recharge · robot 1");
   await a.waitForFunction(
     () => document.getElementById("robots")?.textContent?.includes("8.00 / 8 kJ"),
@@ -368,7 +466,7 @@ try {
   assert.deepEqual(unexpectedResponses, []);
   assert.deepEqual(errors, []);
   console.log(
-    "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, private evidence, reconnect, completion, screenshots and no console errors",
+    "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, steel recovery, vehicle isolation and aluminum use, private evidence, reconnect, completion, screenshots and no console errors",
   );
 } catch (error) {
   for (const [i, context] of browser.contexts().entries())
