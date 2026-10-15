@@ -45,7 +45,7 @@ export function createGame(request) {
   const api = (name, args) =>
     request("/api/runtime", {
       method: "POST",
-      body: JSON.stringify({ name: `astra.game_${name}`, args: { version: 4, ...args } }),
+      body: JSON.stringify({ name: `astra.game_${name}`, args: { version: 5, ...args } }),
     });
   const say = (text) => {
     el("game-message").textContent = text;
@@ -149,6 +149,15 @@ export function createGame(request) {
     } catch (error) {
       if (
         [
+          "ROBOT_REQUIRED",
+          "LEGACY_DEPOSIT",
+          "ROBOT_BUSY",
+          "ROBOT_ENERGY",
+          "ROUTE_BLOCKED",
+          "SENSOR_UNAVAILABLE",
+          "STALE_TARGET",
+          "CLASS_UNSUPPORTED",
+          "CARGO_FULL",
           "CONFLICT",
           "NOT_READY",
           "NOT_AVAILABLE",
@@ -164,9 +173,9 @@ export function createGame(request) {
         ].includes(error.code)
       ) {
         pending = null;
-        if (error.code === "CONFLICT") {
+        if (["CONFLICT", "STALE_TARGET", "DEPOSIT_EMPTY", "ROBOT_BUSY"].includes(error.code)) {
           await read();
-          say("The match changed. Review the updated state and choose the action again.");
+          say(error.message);
           return;
         }
       }
@@ -288,7 +297,7 @@ export function createGame(request) {
         mine ? "YOUR BASE" : t.occupied ? "RIVAL BASE" : "AWAITING CREW",
       );
     }
-    for (const [i, robot] of snapshot.base.assets.filter((a) => a.kind === "robot").entries()) {
+    for (const [i, robot] of snapshot.field.robots.entries()) {
       make("rect", {
         x: robot.position.x - 1,
         y: robot.position.y - 1,
@@ -301,6 +310,14 @@ export function createGame(request) {
         { x: robot.position.x + 2, y: robot.position.y + 0.5, class: "map-label" },
         `R${i + 1}`,
       );
+    }
+    for (const job of snapshot.field.jobs.filter((j) => j.route.length)) {
+      make("polyline", {
+        points: job.route.map((p) => `${p.x},${p.y}`).join(" "),
+        fill: "none",
+        stroke: "#58ddb0",
+        "stroke-width": 0.5,
+      });
     }
     for (const d of w.deposits) {
       const mark = make("circle", {
@@ -317,6 +334,7 @@ export function createGame(request) {
         el("deposit-choice").value = selection;
         renderMap();
         renderDeposit();
+        renderRobots();
         controls();
       };
       mark.addEventListener("click", choose);
@@ -340,11 +358,11 @@ export function createGame(request) {
     if (!d) return;
     const own = snapshot.deposits.find((p) => p.id === d.id);
     area.append(node("h3", `${d.kind[0].toUpperCase() + d.kind.slice(1)} deposit`));
-    if (!own) {
+    if (!own || !snapshot.legacy_recovery) {
       area.append(
         node(
           "p",
-          "Contents remain undiscovered. This site is reserved for future robot survey and hauling jobs.",
+          "Dispatch a robot below to survey this site, then collect and haul material to your inspection bench.",
         ),
       );
       return;
@@ -387,6 +405,85 @@ export function createGame(request) {
         "",
       ),
     );
+  }
+  function renderRobots() {
+    const area = el("robots");
+    area.replaceChildren();
+    const s = snapshot,
+      target = s.world.deposits.find((d) => d.id === selection);
+    for (const [i, r] of s.field.robots.entries()) {
+      const job = s.field.jobs.find((j) => j.id === r.job_id);
+      const busy = job && ["running", "paused"].includes(job.state);
+      const row = node("div", undefined, "job");
+      row.append(node("h3", `Robot ${i + 1}`));
+      row.append(
+        node(
+          "p",
+          `Position ${r.position.x}, ${r.position.y} · ${(r.energy_mj / 1000000).toFixed(2)} / 8 kJ · cargo ${kg(r.cargo.reduce((n, b) => n + b.mass_g, 0))} / 10 kg`,
+        ),
+      );
+      row.append(
+        node(
+          "p",
+          job
+            ? `${job.action.replaceAll("_", " ")} · ${job.phase} · ${job.state}${job.reason ? ` · ${job.reason}` : ""} · ${(job.work_ms / 1000).toFixed(1)} s worked · ${job.route.length} route steps remaining`
+            : "Ready for dispatch",
+          "note",
+        ),
+      );
+      const active = s.status === "active";
+      if (target) {
+        for (const sensor of r.sensors)
+          row.append(
+            button(
+              `Survey with ${sensor} · robot ${i + 1}`,
+              () => action("survey_robot", { robot_id: r.id, deposit_id: target.id, sensor }),
+              active && !busy,
+            ),
+          );
+        const observation = s.field.observations.filter((o) => o.target_id === target.id).at(-1);
+        if (observation) {
+          row.append(
+            node(
+              "p",
+              `${observation.sensor} · ${observation.quality} · ${observation.cues.join("; ")} · evidence revision ${observation.target_revision}`,
+              "note",
+            ),
+          );
+          const current = observation.target_revision === target.revision;
+          if (!current)
+            row.append(node("p", "Deposit changed. Survey again before collecting.", "note"));
+          for (const material_class of observation.candidate_classes)
+            row.append(
+              button(
+                `Collect ${material_class} · robot ${i + 1}`,
+                () =>
+                  action("collect_robot", {
+                    robot_id: r.id,
+                    deposit_id: target.id,
+                    observation_id: observation.id,
+                    material_class,
+                  }),
+                active && !busy && current && !target.depleted,
+              ),
+            );
+        }
+      }
+      for (const [cmd, label] of [
+        ["return_robot", "Return and unload"],
+        ["recharge_robot", "Return and recharge"],
+        ["interrupt_robot", "Interrupt"],
+        ["retreat_robot", "Retreat and unload"],
+      ])
+        row.append(
+          button(
+            `${label} · robot ${i + 1}`,
+            () => action(cmd, { robot_id: r.id }),
+            active && (cmd === "retreat_robot" || (cmd === "interrupt_robot" ? busy : !busy)),
+          ),
+        );
+      area.append(row);
+    }
   }
   async function loadCatalog(epoch) {
     if (scienceCatalog || !snapshot) return;
@@ -435,7 +532,7 @@ export function createGame(request) {
             .filter((b) => b.state !== "consumed")
             .map((b) => [
               b.id,
-              `${b.output_role ?? "cable"} · ${kg(b.copper_g + b.hdpe_g + b.dirt_g)} · ${b.id.slice(0, 8)}`,
+              `${b.output_role ?? "cable"} · ${kg(b.mass_g)} · ${b.id.slice(0, 8)}`,
             ]),
     );
     if (scienceCatalog) {
@@ -515,7 +612,7 @@ export function createGame(request) {
         ? "Share the invitation with one other player. Work begins when they join."
         : s.status === "completed"
           ? `Ended: ${s.completion.reason.replaceAll("-", " ")}. Your material and history remain saved. No combat result is recorded.`
-          : "Recover and process your starter cable. Other waste sites, parked robots and fabricators are reserved for the next stages.";
+          : "Survey, recover, haul and inspect scrap with your robots. Manufacturing and combat remain in development.";
     el("invitation").hidden = s.status !== "waiting" || slot !== 1;
     el("invite-match").value = s.match_id;
     el("invite-code").value = invite?.id === s.match_id ? invite.code : "";
@@ -528,6 +625,7 @@ export function createGame(request) {
       s.status === "active" &&
         !s.base.ready_to_finish &&
         s.jobs.some((j) => j.state === "completed" && !j.recipe.startsWith("inspect-")) &&
+        !s.field.robots.some((r) => r.job_id || r.cargo.length) &&
         !s.jobs.some((j) => ["running", "paused"].includes(j.state)),
     );
     el("finish-recovery").textContent = s.base.ready_to_finish
@@ -590,15 +688,12 @@ export function createGame(request) {
       const evidence = s.science.batches.find((b) => b.id === batch.id)?.evidence;
       const row = node("div", undefined, "batch");
       row.append(
-        node(
-          "strong",
-          `${batch.output_role ?? "Cable feedstock"} · ${kg(batch.copper_g + batch.hdpe_g + batch.dirt_g)}`,
-        ),
+        node("strong", `${batch.output_role ?? `Recovered ${batch.form}`} · ${kg(batch.mass_g)}`),
       );
       row.append(
         node(
           "p",
-          `${batch.state} · ${evidence?.grade ?? batch.grade}\nCu ${kg(batch.copper_g)} / HDPE ${kg(batch.hdpe_g)} / dirt ${kg(batch.dirt_g)}`,
+          `${batch.state} · ${evidence?.grade ?? batch.grade}\n${batch.copper_g === null ? "Composition unknown; bench inspection required." : `Cu ${kg(batch.copper_g)} / HDPE ${kg(batch.hdpe_g)} / dirt ${kg(batch.dirt_g)}`}`,
           "note",
         ),
       );
@@ -615,10 +710,10 @@ export function createGame(request) {
             ),
           );
       }
-      if (batch.form !== "cable")
+      if (batch.form !== "cable" || batch.copper_g === null)
         row.append(
           button(
-            `Inspect ${batch.output_role} · 3 s / 300 J`,
+            `Inspect ${batch.output_role ?? "recovered batch"} · 3 s / 300 J`,
             () => action("inspect_batch", { batch_id: batch.id }),
             s.status === "active" &&
               batch.state === "available" &&
@@ -627,7 +722,7 @@ export function createGame(request) {
               !s.jobs.some((j) => ["running", "paused"].includes(j.state)),
           ),
         );
-      if (batch.form === "cable")
+      if (batch.form === "cable" && batch.copper_g !== null)
         row.append(
           button(
             "Process cable · 20 s / 10 kJ",
@@ -642,6 +737,7 @@ export function createGame(request) {
       batches.append(row);
     }
     renderScience();
+    renderRobots();
     const assets = el("assets");
     assets.replaceChildren();
     for (const a of s.base.assets) {
@@ -764,6 +860,7 @@ export function createGame(request) {
     selection = el("deposit-choice").value;
     renderMap();
     renderDeposit();
+    renderRobots();
     controls();
   });
   setInterval(() => {
@@ -796,6 +893,7 @@ export function createGame(request) {
           "science-version",
           "science-target",
           "science-design",
+          "robots",
           "dump-map",
           "deposit-detail",
           "batches",

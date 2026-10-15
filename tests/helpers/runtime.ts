@@ -1,33 +1,37 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { once } from "node:events";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
+/** Start a real private SQLite service; restart preserves the same database and port. */
 export async function launchRuntime(checkout: string) {
   const directory = await mkdtemp(join(tmpdir(), "tower-sqlite-"));
-  const child = spawn(process.execPath, ["server/game-service.mjs"], {
-    cwd: resolve(checkout),
-    env: {
-      ...process.env,
-      ASTRA_GAME_DB: join(directory, "runtime.sqlite"),
-      ASTRA_GAME_PORT: "0",
-      ASTRA_GAME_ALLOW_SIGNUP: "true",
-    },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  child.stderr.on("data", () => {});
-  let output = "";
-  const close = async () => {
-    if (child.exitCode === null && child.signalCode === null) {
+  let child: ChildProcessWithoutNullStreams;
+  let origin = "";
+  /** Kill the service without a graceful flush, exercising durable transactions. */
+  async function stop(): Promise<void> {
+    if (child && child.exitCode === null && child.signalCode === null) {
       const exited = once(child, "exit");
       child.kill("SIGKILL");
       await exited;
     }
-    await rm(directory, { recursive: true, force: true });
-  };
-  try {
-    const origin = await new Promise<string>((done, reject) => {
+  }
+  /** Reuse a fixed port after the first start so existing MCP sessions reconnect. */
+  async function start(): Promise<void> {
+    child = spawn(process.execPath, ["server/game-service.mjs"], {
+      cwd: resolve(checkout),
+      env: {
+        ...process.env,
+        ASTRA_GAME_DB: join(directory, "runtime.sqlite"),
+        ASTRA_GAME_PORT: origin ? new URL(origin).port : "0",
+        ASTRA_GAME_ALLOW_SIGNUP: "true",
+      },
+      stdio: "pipe",
+    });
+    child.stderr.on("data", () => {});
+    let output = "";
+    origin = await new Promise<string>((done, reject) => {
       const timer = setTimeout(() => reject(new Error("Runtime startup timed out")), 10000);
       child.once("error", () => {
         clearTimeout(timer);
@@ -39,19 +43,33 @@ export async function launchRuntime(checkout: string) {
       });
       child.stdout.on("data", (chunk) => {
         output += chunk.toString();
-        if (output.length > 4096) {
-          clearTimeout(timer);
-          reject(new Error("Unexpected runtime output"));
-          return;
-        }
         const match = /http:\/\/127\.0\.0\.1:\d+/.exec(output);
         if (match) {
           clearTimeout(timer);
           done(match[0]);
+        } else if (output.length > 4096) {
+          clearTimeout(timer);
+          reject(new Error("Unexpected runtime output"));
         }
       });
     });
-    return { origin, directory, close };
+  }
+  /** Remove only this fixture's temporary database after stopping its process. */
+  async function close(): Promise<void> {
+    await stop();
+    await rm(directory, { recursive: true, force: true });
+  }
+  try {
+    await start();
+    return {
+      origin,
+      directory,
+      close,
+      restart: async (): Promise<void> => {
+        await stop();
+        await start();
+      },
+    };
   } catch (error) {
     await close();
     throw error;

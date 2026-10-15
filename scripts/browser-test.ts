@@ -45,19 +45,61 @@ async function press(page: Page, name: string) {
   await wait(page, "game-state", "LIVE");
 }
 async function recover(page: Page) {
-  await press(page, "Inspect cable");
-  assert((await page.locator(".assay").textContent())?.includes("copper"));
-  const collected = page.waitForResponse(
-    (response) =>
-      response.url().endsWith("/api/runtime") &&
-      response.request().postDataJSON()?.args.action === "collect_deposit",
-  );
-  await press(page, "Collect cable");
-  assert.equal((await collected).status(), 200);
+  const requests: unknown[] = [];
+  let dropped = false;
+  await page.route("**/api/runtime", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.args.action === "survey_robot") {
+      requests.push(body);
+      if (!dropped) {
+        dropped = true;
+        await route.fetch();
+        await route.abort("failed");
+        return;
+      }
+    }
+    await route.continue();
+  });
+  await page
+    .getByRole("button", { name: "Survey with camera-depth · robot 1", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Retry pending command" }).click();
   await wait(page, "game-state", "LIVE");
-  assert(await page.getByRole("button", { name: "Collect cable", exact: true }).isDisabled());
+  assert.equal(requests.length, 2);
+  assert.deepEqual(requests[0], requests[1]);
+  await page.unroute("**/api/runtime");
+  await page
+    .getByRole("button", { name: "Collect unclassified · robot 1", exact: true })
+    .waitFor({ state: "visible", timeout: 45000 });
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll("#robots button")].some(
+      (b) =>
+        b.textContent === "Collect unclassified · robot 1" && !(b as HTMLButtonElement).disabled,
+    ),
+  );
+  await press(page, "Collect unclassified · robot 1");
+  await page.waitForFunction(
+    () => document.getElementById("robots")?.textContent?.includes("cargo 10.00 kg"),
+    undefined,
+    { timeout: 45000 },
+  );
+  await page.screenshot({
+    path: `test-results/hauling-${page.viewportSize()?.width}.png`,
+    fullPage: true,
+  });
+  await page.waitForFunction(
+    () => document.querySelectorAll("#batches .batch").length === 1,
+    undefined,
+    { timeout: 45000 },
+  );
+  assert((await page.locator("#batches").textContent())?.includes("Composition unknown"));
+  await press(page, "Inspect recovered batch · 3 s / 300 J");
+  await page
+    .getByRole("button", { name: "Process cable · 20 s / 10 kJ", exact: true })
+    .waitFor({ state: "visible", timeout: 45000 });
   await press(page, "Process cable · 20 s / 10 kJ");
 }
+
 try {
   const runtime = await launchRuntime(checkout);
   cleanups.push(() => runtime.close());
@@ -104,36 +146,9 @@ try {
   assert.equal(await a.locator("#assets details").count(), 8);
   const selected = await a.locator("#deposit-choice").inputValue();
   await a.getByLabel("Select a waste site").selectOption({ label: "Crew 2 · cable" });
-  assert(
-    (await a.locator("#deposit-detail").textContent())?.includes("Contents remain undiscovered"),
-  );
+  assert((await a.locator("#deposit-detail").textContent())?.includes("Dispatch a robot"));
   await a.getByLabel("Select a waste site").selectOption(selected);
-  // Lose a committed response once. The real UI must retry the original receipt.
-  let dropped = false;
-  const requests: Array<{ name: string; args: Record<string, unknown> }> = [];
-  await a.route("**/api/runtime", async (route) => {
-    const body = route.request().postDataJSON();
-    if (body.args.action === "inspect_deposit") {
-      requests.push(body);
-      if (!dropped) {
-        dropped = true;
-        await route.fetch();
-        await route.abort("failed");
-        return;
-      }
-    }
-    await route.continue();
-  });
-  await a.getByRole("button", { name: "Inspect cable", exact: true }).click();
-  await a.getByRole("button", { name: "Retry pending command" }).waitFor();
-  await a.getByRole("button", { name: "Retry pending command" }).click();
-  await wait(a, "game-state", "LIVE");
-  assert.equal(requests.length, 2);
-  assert.deepEqual(requests[0], requests[1]);
-  await a.unroute("**/api/runtime");
-  assert((await a.locator(".assay").textContent())?.includes("copper"));
-  await press(a, "Collect cable");
-  await press(a, "Process cable · 20 s / 10 kJ");
+  await recover(a);
   await press(a, "Pause processing");
   assert((await a.locator("#jobs").textContent())?.includes("paused"));
   await press(a, "Resume processing");
@@ -145,19 +160,30 @@ try {
   assert.equal(await a.locator("#match-id").textContent(), id);
   for (const page of [a, b]) {
     await page.waitForFunction(
-      () => document.querySelector("#jobs .job")?.getAttribute("data-state") === "completed",
+      () =>
+        [...document.querySelectorAll("#jobs .job")].every(
+          (j) => j.getAttribute("data-state") === "completed",
+        ),
       undefined,
       { timeout: 45000 },
     );
     assert.equal(await page.locator("#batches .batch").count(), 3);
     assert((await page.locator("#jobs").textContent())?.includes("10.00 kJ spent"));
-    assert(await page.getByRole("button", { name: "Collect cable", exact: true }).isDisabled());
+    assert(
+      await page
+        .getByRole("button", { name: "Collect unclassified · robot 1", exact: true })
+        .isDisabled(),
+    );
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   }
   await a.reload();
   await wait(a, "match-status", "ACTIVE");
   assert.equal(await a.locator("#batches .batch").count(), 3);
-  assert(await a.getByRole("button", { name: "Collect cable", exact: true }).isDisabled());
+  assert(
+    await a
+      .getByRole("button", { name: "Collect unclassified · robot 1", exact: true })
+      .isDisabled(),
+  );
   // The UI asks the authority for evidence and previews; no client-generated grades.
   for (const page of [a, b]) {
     const conductorId = await page
@@ -172,7 +198,7 @@ try {
     assert((await page.locator("#science-result").textContent())?.includes("NEEDS_INSPECTION"));
     await press(page, "Inspect conductor · 3 s / 300 J");
     await page.waitForFunction(() =>
-      document.getElementById("science-version")?.textContent?.includes("1 saved observations"),
+      document.getElementById("science-version")?.textContent?.includes("2 saved observations"),
     );
     await press(page, "Check suitability");
     assert(
@@ -190,20 +216,20 @@ try {
   }
   await a.reload();
   await wait(a, "match-status", "ACTIVE");
-  assert((await a.locator("#science-version").textContent())?.includes("1 saved observations"));
+  assert((await a.locator("#science-version").textContent())?.includes("2 saved observations"));
   await press(a, "Test fastener · 3 s / 300 J");
   await a.waitForFunction(() =>
-    document.getElementById("science-version")?.textContent?.includes("2 saved observations"),
+    document.getElementById("science-version")?.textContent?.includes("3 saved observations"),
   );
   await a.getByLabel("Evaluation", { exact: true }).selectOption("component");
   await press(a, "Check suitability");
   assert(
     (await a.locator("#science-result").textContent())?.includes("Eligible under this game design"),
   );
-  assert((await b.locator("#science-version").textContent())?.includes("1 saved observations"));
+  assert((await b.locator("#science-version").textContent())?.includes("2 saved observations"));
   await press(a, "Inspect residue · 3 s / 300 J");
   await a.waitForFunction(() =>
-    document.getElementById("science-version")?.textContent?.includes("3 saved observations"),
+    document.getElementById("science-version")?.textContent?.includes("4 saved observations"),
   );
   await a.getByLabel("Evaluation", { exact: true }).selectOption("process");
   const residueId = await a
@@ -229,6 +255,20 @@ try {
   await a.locator(".map-layout").screenshot({ path: "test-results/recovery-map.png" });
   await a.locator(".science-panel").screenshot({ path: "test-results/material-lab-desktop.png" });
   await b.locator(".science-panel").screenshot({ path: "test-results/material-lab-mobile.png" });
+  await press(a, "Return and recharge · robot 1");
+  await a.waitForFunction(
+    () => document.getElementById("robots")?.textContent?.includes("8.00 / 8 kJ"),
+    undefined,
+    { timeout: 45000 },
+  );
+  await press(a, "Survey with camera-depth · robot 2");
+  await press(a, "Interrupt · robot 2");
+  await press(a, "Retreat and unload · robot 2");
+  await a.waitForFunction(
+    () => !(document.getElementById("finish-recovery") as HTMLButtonElement)?.disabled,
+    undefined,
+    { timeout: 45000 },
+  );
   await press(a, "Finish recovery session");
   await wait(a, "match-status", "ACTIVE");
   const finished = b.waitForResponse(

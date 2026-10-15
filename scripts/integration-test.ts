@@ -10,7 +10,7 @@ if (!checkout) throw new Error("Set OI_CHECKOUT to the documented SQLite runtime
 const runtime = await launchRuntime(checkout);
 const app = await startApp({ checkout, serviceUrl: runtime.origin, port: 0 });
 const headers = { origin: app.origin, "content-type": "application/json" };
-const command = () => ({ version: 4, command_id: randomUUID() });
+const command = () => ({ version: 5, command_id: randomUUID() });
 const password = "test-only-long-password";
 async function register(username: string) {
   const response = await fetch(`${app.origin}/api/session`, {
@@ -55,7 +55,7 @@ try {
     invite_code: created.body.invite_code,
   });
   assert.equal(joined.status, 200);
-  const readArgs = { version: 4, match_id: id };
+  const readArgs = { version: 5, match_id: id };
   assert.equal((await call(c, "read_match", readArgs)).body.error.code, "NOT_AVAILABLE");
   assert.equal(
     (
@@ -81,21 +81,88 @@ try {
       ...target,
     });
   const initial = await read();
-  assert.equal(initial.deposits[0].observation, null);
+  const robot_id = initial.field.robots[0].id;
+  const deposit_id = initial.deposits[0].id;
+  async function until(predicate: (s: typeof initial) => boolean) {
+    const deadline = Date.now() + 45000;
+    while (Date.now() < deadline) {
+      const state = await read();
+      if (predicate(state)) return state;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    throw new Error("Robot progression timed out");
+  }
   assert.equal(
-    (await action("inspect_deposit", { deposit_id: joined.body.snapshot.deposits[0].id })).body
-      .error.code,
+    (await action("return_robot", { robot_id: joined.body.snapshot.field.robots[0].id })).body.error
+      .code,
     "NOT_AVAILABLE",
   );
-  await action("inspect_deposit", { deposit_id: initial.deposits[0].id });
-  const collected = await action("collect_deposit", { deposit_id: initial.deposits[0].id });
-  assert.equal(collected.status, 200);
+  assert.equal((await action("collect_deposit", { deposit_id })).body.error.code, "ROBOT_REQUIRED");
+  assert.equal(
+    (await action("survey_robot", { robot_id, deposit_id, sensor: "camera-depth", energy_mj: "0" }))
+      .status,
+    400,
+  );
+  const surveyed = await action("survey_robot", { robot_id, deposit_id, sensor: "camera-depth" });
+  assert.equal(surveyed.status, 200);
+  const observed = await until((s) => s.field.observations.length > 0);
+  const observation_id = observed.field.observations[0].id;
+  const request = {
+    ...command(),
+    match_id: id,
+    expected_revision: observed.revision,
+    action: "collect_robot",
+    robot_id,
+    deposit_id,
+    observation_id,
+    material_class: "unclassified",
+  };
+  const accepted = await call(a, "command", request);
+  assert.equal(accepted.status, 200);
+  assert.deepEqual((await call(a, "command", request)).body, accepted.body);
+  const hauling = await until((s) => s.field.robots[0].cargo.length > 0);
+  assert.equal(hauling.field.robots[0].cargo[0].mass_g, 10000);
+  assert.equal(hauling.batches.length, 0);
+  await runtime.restart();
+  assert.deepEqual((await call(a, "command", request)).body, accepted.body);
+  assert.equal((await call(b, "read_match", readArgs)).body.snapshot.field.observations.length, 0);
+  const unloaded = await until((s) => s.batches.length === 1);
+  assert.equal(unloaded.field.robots[0].cargo.length, 0);
+  assert.equal(unloaded.batches[0].copper_g, null);
+  assert.equal(
+    (
+      await action("collect_robot", {
+        robot_id: initial.field.robots[1].id,
+        deposit_id,
+        observation_id,
+        material_class: "unclassified",
+      })
+    ).body.error.code,
+    "STALE_TARGET",
+  );
+  assert.equal(
+    (
+      await call(a, "command", {
+        ...command(),
+        match_id: id,
+        expected_revision: initial.revision,
+        action: "return_robot",
+        robot_id,
+      })
+    ).body.error.code,
+    "CONFLICT",
+  );
+  const inspected = await action("inspect_batch", { batch_id: unloaded.batches[0].id });
+  assert.equal(inspected.status, 200);
+  await until((s) => s.batches[0].copper_g !== null);
   const started = await action("start_processing", {
-    batch_id: collected.body.snapshot.batches[0].id,
+    batch_id: unloaded.batches[0].id,
     machine_id: initial.machines[0].id,
   });
   assert.equal(started.status, 200);
-  assert.equal(started.body.snapshot.jobs[0].state, "running");
+  assert.equal((await action("recharge_robot", { robot_id })).status, 200);
+  const charging = await until((s) => s.field.jobs.at(-1).reason === "base-busy");
+  assert(charging.field.robots[0].energy_mj < 8000000);
   const denied = await fetch(`${app.origin}/api/matches`, {
     method: "POST",
     headers: { ...headers, cookie: a },
