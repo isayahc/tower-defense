@@ -219,7 +219,13 @@ async function recoverFamily(page: Page, slot: number, kind: string, recipe: str
 }
 
 /** Use only visible owned choices; the server validates each exact bill of materials. */
-async function manufacturePart(page: Page, recipe: string, grade: string, minimumKg: number) {
+async function manufacturePart(
+  page: Page,
+  recipe: string,
+  grade: string,
+  minimumKg: number,
+  checkStalePreview = false,
+) {
   await page.getByLabel("Manufacturing recipe", { exact: true }).selectOption(recipe);
   const options = await page
     .locator("#production-batches option")
@@ -238,6 +244,38 @@ async function manufacturePart(page: Page, recipe: string, grade: string, minimu
   await page.getByLabel("Material batches", { exact: true }).selectOption(input.id);
   await page.getByLabel("Manufactured parts", { exact: true }).selectOption([]);
   await page.getByLabel("Tested component stock", { exact: true }).selectOption([]);
+  if (checkStalePreview) {
+    let entered!: () => void, release!: () => void;
+    const seen = new Promise<void>((r) => {
+        entered = r;
+      }),
+      gate = new Promise<void>((r) => {
+        release = r;
+      });
+    let held = false;
+    const intercept = async (route: import("playwright").Route) => {
+      if (!held && route.request().postDataJSON()?.name === "astra.game_manufacturing_preview") {
+        held = true;
+        const response = await route.fetch();
+        entered();
+        await gate;
+        await route.fulfill({ response });
+      } else await route.continue();
+    };
+    await page.route("**/api/runtime", intercept);
+    const pending = press(page, "Review bill of materials");
+    await seen;
+    await page.getByLabel("Manufacturing recipe", { exact: true }).selectOption("metal-press");
+    release();
+    await pending;
+    assert(
+      await page
+        .getByRole("button", { name: "Queue approved manufacture", exact: true })
+        .isDisabled(),
+    );
+    await page.unroute("**/api/runtime", intercept);
+    await page.getByLabel("Manufacturing recipe", { exact: true }).selectOption(recipe);
+  }
   await press(page, "Review bill of materials");
   assert(
     (await page.locator("#production-result").textContent())?.includes(
@@ -255,7 +293,7 @@ async function manufacturePart(page: Page, recipe: string, grade: string, minimu
   );
 }
 async function constructPress(page: Page) {
-  await manufacturePart(page, "steel-bracket", "game-steel-v1", 1);
+  await manufacturePart(page, "steel-bracket", "game-steel-v1", 1, true);
   await manufacturePart(page, "steel-bracket", "game-steel-v1", 1);
   await manufacturePart(page, "copper-conductor", "game-copper-v1", 0.1);
   await page.getByLabel("Manufacturing recipe", { exact: true }).selectOption("metal-press");

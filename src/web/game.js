@@ -677,8 +677,16 @@ export function createGame(request) {
   el("preview-production").addEventListener("click", () =>
     work(async () => {
       if (!snapshot) return;
-      const selection = productionSelection(),
-        result = await api("manufacturing_preview", { match_id: snapshot.match_id, ...selection });
+      const epoch = generation,
+        match = snapshot.match_id,
+        selection = productionSelection(),
+        result = await api("manufacturing_preview", { match_id: match, ...selection });
+      if (
+        epoch !== generation ||
+        snapshot?.match_id !== match ||
+        JSON.stringify(selection) !== JSON.stringify(productionSelection())
+      )
+        return;
       productionPreview = { revision: result.revision, selection };
       el("production-result").textContent =
         result.result.message + " Next: " + result.result.next_actions.join(", ");
