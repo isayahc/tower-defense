@@ -177,10 +177,19 @@ async function recoverFamily(page: Page, slot: number, kind: string, recipe: str
   await page.getByLabel("Owned material or component").selectOption(input);
   await page.getByLabel("Design or recipe").selectOption(recipe);
   await press(page, "Check suitability");
+  if ((await page.locator("#science-result").textContent())?.includes("INSUFFICIENT_ENERGY")) {
+    // Earlier recovery/construction spent real shared charge. Wait for measured solar, then request a fresh preview.
+    await page.waitForFunction(
+      () => Number.parseFloat(document.getElementById("power-reading")?.textContent ?? "0") >= 11,
+      undefined,
+      { timeout: 120000 },
+    );
+    await press(page, "Check suitability");
+  }
+  const processPreview = await page.locator("#science-result").textContent();
   assert(
-    (await page.locator("#science-result").textContent())?.includes(
-      "Eligible under this game design",
-    ),
+    processPreview?.includes("Eligible under this game design"),
+    processPreview ?? "Missing server process preview",
   );
   await press(page, "Start approved process");
   await page.waitForFunction(
