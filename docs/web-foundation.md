@@ -74,3 +74,10 @@ The bench finishes approved homogeneous recovered stock into conductors, bracket
 Finished-part racks hold 16 parts. Queued work keeps reservations through power/equipment/storage waits. Discarded or destroyed products retain their material and hardware in private debris records, with no refund. The client neither calculates yields nor advances work. See the [engine policy](https://github.com/Mapped-Assembly/Open-Industries/blob/main/docs/game-manufacturing-queues.md) for exact quantities, rates, limits and accounting.
 
 Manufacturing requires the pinned SQLite schema-7 runtime and matching reviewed client schemas. Back up the complete database before upgrade; older binaries require the complete pre-upgrade backup. Existing schema-6 state and immutable receipts are preserved. Local `npm run check` and real HTTP/MCP integration cover the expanded contract; browser CI includes desktop press construction and mobile conductor manufacture with screenshots.
+
+
+## Defensive platforms (#20)
+
+The construction catalog now includes HDPE/aluminum turret variants, raid launchers and 250 g steel-slug ammunition. The owner-only platform panel and map show deployment position, health, range/target eligibility, cooldown, magazine, shot/commissioning energy and blocked reasons. Deploy to a free reachable home-side cell, load while disabled, then enable. Damaged disabled platforms accept a steel bracket plus 500 J for up to 40 health. Salvage costs 300 J and returns ungraded constituent lots, untested original hardware and remaining attached products exactly once. All controls use the existing immutable command retry path; no client supplies unit stats, damage or material grants.
+
+Open-Industries SQLite schema 8 and the exact matching wire-v5 extension are required. This remains a recovery/production session: attacks, movement, tower damage and victory are pending #18/#19/#17. The readiness display distinguishes supplied equipment from the unavailable combat resolver. See the engine's `docs/game-units.md` for bills of materials, limits and accounting policy.
