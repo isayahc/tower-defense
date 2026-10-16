@@ -3,7 +3,7 @@
   "version": 1,
   "source": {
     "repository": "Mapped-Assembly/Open-Industries",
-    "commit": "10b4be0e094a8fe56084736226debc0f821272bd",
+    "commit": "932678a4ef8c29c14fb285c33f6d4b8d051a16a1",
     "command": "npm run discover:oi -- <Open-Industries-checkout>",
     "full_report_sha256": "17acdf5a89ff4cd027297be058171ab8fc72f27868cc7b325edcf47a52c4afa7",
     "hash_encoding": "UTF-8 JSON with sorted keys, compact separators, ensure_ascii=true"
