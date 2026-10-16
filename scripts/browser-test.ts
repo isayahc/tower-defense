@@ -711,9 +711,9 @@ try {
   );
   // Use a distant site so a real travel phase remains active while interruption is clicked.
   await a.getByLabel("Select a waste site").selectOption({ label: "Crew 2 · glass" });
-  await press(a, "Survey with camera-depth · robot 2");
-  await press(a, "Interrupt · robot 2");
-  await press(a, "Retreat and unload · robot 2");
+  await press(a, "Survey with camera-depth · robot 1");
+  await press(a, "Interrupt · robot 1");
+  await press(a, "Retreat and unload · robot 1");
   await a.waitForFunction(
     () => !(document.getElementById("finish-recovery") as HTMLButtonElement)?.disabled,
     undefined,
