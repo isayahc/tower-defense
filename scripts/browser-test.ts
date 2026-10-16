@@ -460,6 +460,11 @@ async function constructTurret(page: Page) {
   const suffix = "sentry-turret " + unitId.slice(0, 8);
   await page.getByLabel("Deployment X", { exact: true }).fill("38");
   await page.getByLabel("Deployment Y", { exact: true }).fill("24");
+  await page.waitForFunction(
+    () => Number.parseFloat(document.getElementById("power-reading")?.textContent ?? "0") >= 2,
+    undefined,
+    { timeout: 45000 },
+  );
   await press(page, "Deploy " + suffix + " (500 J)");
   await press(page, "Load steel slug into " + suffix);
   await press(page, "Enable " + suffix);
