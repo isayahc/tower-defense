@@ -54,7 +54,11 @@ async function press(page: Page, name: string) {
         "astra.game_manufacturing_catalog",
       ].includes(operation);
     });
-    await page.getByRole("button", { name, exact: true }).click();
+    await page
+      .getByRole("button", { name, exact: true })
+      .and(page.locator(":enabled"))
+      .first()
+      .click();
     const response = await pending;
     const result = await response.json();
     await wait(page, "game-state", "LIVE");
@@ -190,6 +194,7 @@ async function recoverFamily(page: Page, slot: number, kind: string, recipe: str
   const usable = await page
     .locator("#science-target option")
     .filter({ hasText: /^usable/ })
+    .last()
     .getAttribute("value");
   assert(usable);
   await press(page, "Inspect usable · 3 s / 300 J");
@@ -335,6 +340,136 @@ async function constructPress(page: Page) {
     .locator(".production-panel")
     .screenshot({ path: "test-results/manufacturing-desktop.png" });
 }
+/** Assemble exact visible part counts and tested hardware, through the authoritative preview. */
+async function assemble(
+  page: Page,
+  recipe: string,
+  demands: Record<string, number>,
+  hardware: string[],
+) {
+  await page.getByLabel("Manufacturing recipe", { exact: true }).selectOption(recipe);
+  await page.getByLabel("Material batches", { exact: true }).selectOption([]);
+  const parts = await page
+    .locator("#production-products option")
+    .evaluateAll((options) =>
+      options.map((o) => ({ id: (o as HTMLOptionElement).value, label: o.textContent ?? "" })),
+    );
+  const ids = Object.entries(demands).flatMap(([kind, count]) => {
+    const found = parts.filter((o) => o.label.startsWith(kind + " ·")).slice(0, count);
+    assert.equal(found.length, count);
+    return found.map((o) => o.id);
+  });
+  await page.getByLabel("Manufactured parts", { exact: true }).selectOption(ids);
+  const components = await page
+    .locator("#production-components option")
+    .evaluateAll((options) =>
+      options.map((o) => ({ id: (o as HTMLOptionElement).value, label: o.textContent ?? "" })),
+    );
+  const componentIds = hardware.flatMap((kind) => {
+    let remaining = kind === "fastener" ? 2 : 1;
+    const ids: string[] = [];
+    for (const c of components.filter((o) => o.label.includes(" × " + kind + " ·"))) {
+      if (remaining <= 0) break;
+      ids.push(c.id);
+      remaining -= Number(/^(\d+) ×/.exec(c.label)?.[1] ?? 0);
+    }
+    assert(remaining <= 0, "Missing tested " + kind);
+    return ids;
+  });
+  await page.getByLabel("Tested component stock", { exact: true }).selectOption(componentIds);
+  await press(page, "Review bill of materials");
+  assert(
+    (await page.locator("#production-result").textContent())?.includes(
+      "Exact inputs will be reserved",
+    ),
+  );
+  await press(page, "Queue approved manufacture");
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll("#production-jobs .job")].every(
+        (j) => j.getAttribute("data-state") === "completed",
+      ),
+    undefined,
+    { timeout: 45000 },
+  );
+}
+/** Real recovered stock and original tested hardware become a supplied platform on desktop/mobile. */
+async function constructTurret(page: Page) {
+  await recoverFamily(page, 1, "packaging", "bench-trim-hdpe", "hdpe-housing");
+  await press(page, "Return and recharge · robot 2");
+  await page.waitForFunction(
+    () => {
+      const t = document.querySelectorAll("#robots > .job")[1]?.textContent ?? "";
+      return t.includes("8.00 / 8 kJ") && t.includes("Ready for dispatch");
+    },
+    undefined,
+    { timeout: 45000 },
+  );
+  await page.locator("details.equipment > summary").click();
+  for (const label of ["Fabricator", "Scavenger 02"]) {
+    await page.locator("#assets details").filter({ hasText: label }).locator("summary").click();
+    await press(page, "Dismantle " + label + " for components");
+  }
+  for (const kind of ["drive", "controller", "motor", "camera"]) {
+    while (
+      await page
+        .getByRole("button", { name: "Test " + kind + " · 3 s / 300 J", exact: true })
+        .and(page.locator(":enabled"))
+        .count()
+    ) {
+      await press(page, "Test " + kind + " · 3 s / 300 J");
+      await page.waitForFunction(
+        () =>
+          [...document.querySelectorAll("#jobs .job")].every(
+            (j) => j.getAttribute("data-state") === "completed",
+          ),
+        undefined,
+        { timeout: 45000 },
+      );
+    }
+  }
+  await manufacturePart(page, "steel-bracket", "game-steel-v1", 1);
+  await manufacturePart(page, "copper-conductor", "game-copper-v1", 0.1);
+  await assemble(page, "fabricator", { "steel-bracket": 1, "copper-conductor": 1 }, [
+    "drive",
+    "controller",
+    "fastener",
+  ]);
+  for (let i = 0; i < 2; i++) await manufacturePart(page, "steel-bracket", "game-steel-v1", 1);
+  await manufacturePart(page, "copper-conductor", "game-copper-v1", 0.1);
+  await manufacturePart(page, "hdpe-housing", "game-hdpe-v1", 0.2);
+  await assemble(
+    page,
+    "sentry-turret",
+    { "steel-bracket": 2, "copper-conductor": 1, "hdpe-housing": 1 },
+    ["motor", "camera", "controller", "fastener"],
+  );
+  await manufacturePart(page, "steel-slug", "game-steel-v1", 0.25);
+  const card = page.locator("#units-list .job").filter({ hasText: "sentry-turret" });
+  const unitId = await card.getAttribute("data-unit-id");
+  assert(unitId);
+  const suffix = "sentry-turret " + unitId.slice(0, 8);
+  await page.getByLabel("Deployment X", { exact: true }).fill("38");
+  await page.getByLabel("Deployment Y", { exact: true }).fill("24");
+  await press(page, "Deploy " + suffix + " (500 J)");
+  await press(page, "Load steel slug into " + suffix);
+  await press(page, "Enable " + suffix);
+  assert((await card.textContent())?.includes("1 / 4 steel slugs"));
+  assert((await card.textContent())?.includes("combat-not-implemented"));
+  assert.equal(await page.locator('circle[data-unit-id="' + unitId + '"]').count(), 1);
+  await page.locator(".production-panel").screenshot({ path: "test-results/unit-desktop.png" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await wait(page, "match-status", "ACTIVE");
+  await page.getByRole("button", { name: "Disable " + suffix, exact: true }).waitFor();
+  await press(page, "Disable " + suffix);
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.locator(".production-panel").screenshot({ path: "test-results/unit-mobile.png" });
+  await press(page, "Salvage " + suffix + " (300 J)");
+  assert((await page.locator("#units-list").textContent())?.includes("salvaged"));
+  await page.setViewportSize({ width: 1360, height: 980 });
+}
+
 try {
   const runtime = await launchRuntime(checkout);
   cleanups.push(() => runtime.close());
@@ -548,6 +683,7 @@ try {
   // Keep these approval/click flows sequential so neither test races a stale approval.
   await recoverFamily(a, 1, "construction", "bench-recover-steel", "steel-bracket");
   await constructPress(a);
+  await constructTurret(a);
   await recoverFamily(b, 2, "vehicle", "isolate-vehicle", "aluminum-housing");
   await manufacturePart(b, "copper-conductor", "game-copper-v1", 0.1);
   await b
@@ -589,7 +725,7 @@ try {
   assert.deepEqual(unexpectedResponses, []);
   assert.deepEqual(errors, []);
   console.log(
-    "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, steel recovery, vehicle isolation and aluminum use, desktop press construction and mobile component manufacture, private evidence, reconnect, completion, screenshots and no console errors",
+    "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, steel recovery, vehicle isolation and aluminum use, desktop press/turret construction, metered deployment and ammo, mobile unit reconnect/disable/salvage and mobile component manufacture, private evidence, reconnect, completion, screenshots and no console errors",
   );
 } catch (error) {
   for (const [i, context] of browser.contexts().entries())

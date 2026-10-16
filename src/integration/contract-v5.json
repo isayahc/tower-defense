@@ -44,7 +44,11 @@
       "cold-hazard-isolation",
       "machine-construction",
       "manufacturing-queues",
-      "tested-component-assembly"
+      "tested-component-assembly",
+      "unit-manufacturing",
+      "unit-deployment",
+      "unit-ammunition",
+      "unit-repair-salvage"
     ],
     "unsupported": [
       "sensor-kit-manufacturing",
@@ -480,6 +484,152 @@
                         }
                       ],
                       "requirements": []
+                    },
+                    {
+                      "id": "steel-slug",
+                      "category": "part",
+                      "station": "metal-press",
+                      "duration_ms": 4000,
+                      "power_w": 250,
+                      "materials": [
+                        {
+                          "use": "steel-bracket",
+                          "mass_g": 250
+                        }
+                      ],
+                      "products": [],
+                      "components": []
+                    },
+                    {
+                      "id": "sentry-turret",
+                      "category": "defense",
+                      "station": "fabricator",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "hdpe-housing",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "motor",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "camera",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "controller",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "fastener",
+                          "quantity": 2
+                        }
+                      ],
+                      "requirements": []
+                    },
+                    {
+                      "id": "armored-turret",
+                      "category": "defense",
+                      "station": "fabricator",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "aluminum-housing",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "motor",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "camera",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "controller",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "fastener",
+                          "quantity": 2
+                        }
+                      ],
+                      "requirements": []
+                    },
+                    {
+                      "id": "raid-launcher",
+                      "category": "defense",
+                      "station": "fabricator",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-chassis",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "hdpe-housing",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "traction-tread",
+                          "quantity": 2
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "motor",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "wheel",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "controller",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "robot-battery",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "fastener",
+                          "quantity": 2
+                        }
+                      ],
+                      "requirements": []
                     }
                   ],
                   "storage_slots": 16,
@@ -523,6 +673,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",
@@ -805,6 +957,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",
@@ -1399,6 +1553,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",
@@ -1869,6 +2025,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",
@@ -1995,6 +2153,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",
@@ -2104,7 +2264,11 @@
                   "cold-hazard-isolation",
                   "machine-construction",
                   "manufacturing-queues",
-                  "tested-component-assembly"
+                  "tested-component-assembly",
+                  "unit-manufacturing",
+                  "unit-deployment",
+                  "unit-ammunition",
+                  "unit-repair-salvage"
                 ]
               },
               "unsupported": {
@@ -2167,6 +2331,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",
@@ -3115,6 +3281,227 @@
                       "observations"
                     ]
                   },
+                  "units": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "version": {
+                        "const": "units-v1"
+                      },
+                      "profiles": {
+                        "const": {
+                          "sentry-turret": {
+                            "role": "defense",
+                            "max_health": 100,
+                            "range_cells": 16,
+                            "minimum_range_cells": 0,
+                            "cooldown_ms": 2000,
+                            "shot_energy_j": 500,
+                            "deployment_energy_j": 500,
+                            "ammunition_capacity": 4,
+                            "idle_power_w": 0,
+                            "material_effect": "Eligible HDPE housing: 100 health, 500 J deployment."
+                          },
+                          "armored-turret": {
+                            "role": "defense",
+                            "max_health": 140,
+                            "range_cells": 16,
+                            "minimum_range_cells": 0,
+                            "cooldown_ms": 2000,
+                            "shot_energy_j": 500,
+                            "deployment_energy_j": 750,
+                            "ammunition_capacity": 4,
+                            "idle_power_w": 0,
+                            "material_effect": "Eligible aluminum housing: 140 health, 750 J deployment; +40 health and +250 J versus HDPE."
+                          },
+                          "raid-launcher": {
+                            "role": "raider",
+                            "max_health": 160,
+                            "range_cells": 32,
+                            "minimum_range_cells": 8,
+                            "cooldown_ms": 5000,
+                            "shot_energy_j": 1000,
+                            "deployment_energy_j": 1000,
+                            "ammunition_capacity": 2,
+                            "idle_power_w": 0,
+                            "material_effect": "Graded steel chassis and two recovered treads: 160 health; deployable raiding platform."
+                          }
+                        }
+                      },
+                      "combat_available": {
+                        "const": false
+                      },
+                      "units": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "kind": {
+                              "enum": ["sentry-turret", "armored-turret", "raid-launcher"]
+                            },
+                            "state": {
+                              "enum": ["stowed", "deployed", "destroyed", "salvaged"]
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "position": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "x": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 96
+                                    },
+                                    "y": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 56
+                                    }
+                                  },
+                                  "required": ["x", "y"]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "health": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 160
+                            },
+                            "ammunition_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 4
+                            },
+                            "repair_product_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 4
+                            },
+                            "last_fired_ms": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "ammunition_count": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 4
+                            },
+                            "ammunition_capacity": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 4
+                            },
+                            "operational_ready": {
+                              "type": "boolean"
+                            },
+                            "can_fire": {
+                              "const": false
+                            },
+                            "blocked_reasons": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 100
+                              },
+                              "maxItems": 8
+                            },
+                            "targets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "const": "tower"
+                                  },
+                                  "distance_cells": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 120
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "in_range": {
+                                    "type": "boolean"
+                                  },
+                                  "eligible": {
+                                    "const": false
+                                  },
+                                  "reason": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "kind",
+                                  "distance_cells",
+                                  "in_range",
+                                  "eligible",
+                                  "reason"
+                                ]
+                              },
+                              "maxItems": 1
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "state",
+                            "enabled",
+                            "position",
+                            "health",
+                            "ammunition_ids",
+                            "repair_product_ids",
+                            "last_fired_ms",
+                            "ammunition_count",
+                            "ammunition_capacity",
+                            "operational_ready",
+                            "can_fire",
+                            "blocked_reasons",
+                            "targets"
+                          ]
+                        },
+                        "maxItems": 16
+                      }
+                    },
+                    "required": ["version", "profiles", "combat_available", "units"]
+                  },
                   "manufacturing": {
                     "type": "object",
                     "additionalProperties": false,
@@ -3978,7 +4365,7 @@
                         "dissipated_mj": {
                           "type": "integer",
                           "minimum": 0,
-                          "maximum": 20000000
+                          "maximum": 9007199254740991
                         }
                       },
                       "required": ["id", "kind", "status", "power_w", "energy_mj", "dissipated_mj"]
@@ -4260,6 +4647,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",
@@ -5216,6 +5605,227 @@
                       "observations"
                     ]
                   },
+                  "units": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "version": {
+                        "const": "units-v1"
+                      },
+                      "profiles": {
+                        "const": {
+                          "sentry-turret": {
+                            "role": "defense",
+                            "max_health": 100,
+                            "range_cells": 16,
+                            "minimum_range_cells": 0,
+                            "cooldown_ms": 2000,
+                            "shot_energy_j": 500,
+                            "deployment_energy_j": 500,
+                            "ammunition_capacity": 4,
+                            "idle_power_w": 0,
+                            "material_effect": "Eligible HDPE housing: 100 health, 500 J deployment."
+                          },
+                          "armored-turret": {
+                            "role": "defense",
+                            "max_health": 140,
+                            "range_cells": 16,
+                            "minimum_range_cells": 0,
+                            "cooldown_ms": 2000,
+                            "shot_energy_j": 500,
+                            "deployment_energy_j": 750,
+                            "ammunition_capacity": 4,
+                            "idle_power_w": 0,
+                            "material_effect": "Eligible aluminum housing: 140 health, 750 J deployment; +40 health and +250 J versus HDPE."
+                          },
+                          "raid-launcher": {
+                            "role": "raider",
+                            "max_health": 160,
+                            "range_cells": 32,
+                            "minimum_range_cells": 8,
+                            "cooldown_ms": 5000,
+                            "shot_energy_j": 1000,
+                            "deployment_energy_j": 1000,
+                            "ammunition_capacity": 2,
+                            "idle_power_w": 0,
+                            "material_effect": "Graded steel chassis and two recovered treads: 160 health; deployable raiding platform."
+                          }
+                        }
+                      },
+                      "combat_available": {
+                        "const": false
+                      },
+                      "units": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "kind": {
+                              "enum": ["sentry-turret", "armored-turret", "raid-launcher"]
+                            },
+                            "state": {
+                              "enum": ["stowed", "deployed", "destroyed", "salvaged"]
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "position": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "x": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 96
+                                    },
+                                    "y": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 56
+                                    }
+                                  },
+                                  "required": ["x", "y"]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "health": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 160
+                            },
+                            "ammunition_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 4
+                            },
+                            "repair_product_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 4
+                            },
+                            "last_fired_ms": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "ammunition_count": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 4
+                            },
+                            "ammunition_capacity": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 4
+                            },
+                            "operational_ready": {
+                              "type": "boolean"
+                            },
+                            "can_fire": {
+                              "const": false
+                            },
+                            "blocked_reasons": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 100
+                              },
+                              "maxItems": 8
+                            },
+                            "targets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "const": "tower"
+                                  },
+                                  "distance_cells": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 120
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "in_range": {
+                                    "type": "boolean"
+                                  },
+                                  "eligible": {
+                                    "const": false
+                                  },
+                                  "reason": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "kind",
+                                  "distance_cells",
+                                  "in_range",
+                                  "eligible",
+                                  "reason"
+                                ]
+                              },
+                              "maxItems": 1
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "state",
+                            "enabled",
+                            "position",
+                            "health",
+                            "ammunition_ids",
+                            "repair_product_ids",
+                            "last_fired_ms",
+                            "ammunition_count",
+                            "ammunition_capacity",
+                            "operational_ready",
+                            "can_fire",
+                            "blocked_reasons",
+                            "targets"
+                          ]
+                        },
+                        "maxItems": 16
+                      }
+                    },
+                    "required": ["version", "profiles", "combat_available", "units"]
+                  },
                   "manufacturing": {
                     "type": "object",
                     "additionalProperties": false,
@@ -6079,7 +6689,7 @@
                         "dissipated_mj": {
                           "type": "integer",
                           "minimum": 0,
-                          "maximum": 20000000
+                          "maximum": 9007199254740991
                         }
                       },
                       "required": ["id", "kind", "status", "power_w", "energy_mj", "dissipated_mj"]
@@ -6357,6 +6967,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",
@@ -7305,6 +7917,227 @@
                       "observations"
                     ]
                   },
+                  "units": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "version": {
+                        "const": "units-v1"
+                      },
+                      "profiles": {
+                        "const": {
+                          "sentry-turret": {
+                            "role": "defense",
+                            "max_health": 100,
+                            "range_cells": 16,
+                            "minimum_range_cells": 0,
+                            "cooldown_ms": 2000,
+                            "shot_energy_j": 500,
+                            "deployment_energy_j": 500,
+                            "ammunition_capacity": 4,
+                            "idle_power_w": 0,
+                            "material_effect": "Eligible HDPE housing: 100 health, 500 J deployment."
+                          },
+                          "armored-turret": {
+                            "role": "defense",
+                            "max_health": 140,
+                            "range_cells": 16,
+                            "minimum_range_cells": 0,
+                            "cooldown_ms": 2000,
+                            "shot_energy_j": 500,
+                            "deployment_energy_j": 750,
+                            "ammunition_capacity": 4,
+                            "idle_power_w": 0,
+                            "material_effect": "Eligible aluminum housing: 140 health, 750 J deployment; +40 health and +250 J versus HDPE."
+                          },
+                          "raid-launcher": {
+                            "role": "raider",
+                            "max_health": 160,
+                            "range_cells": 32,
+                            "minimum_range_cells": 8,
+                            "cooldown_ms": 5000,
+                            "shot_energy_j": 1000,
+                            "deployment_energy_j": 1000,
+                            "ammunition_capacity": 2,
+                            "idle_power_w": 0,
+                            "material_effect": "Graded steel chassis and two recovered treads: 160 health; deployable raiding platform."
+                          }
+                        }
+                      },
+                      "combat_available": {
+                        "const": false
+                      },
+                      "units": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "kind": {
+                              "enum": ["sentry-turret", "armored-turret", "raid-launcher"]
+                            },
+                            "state": {
+                              "enum": ["stowed", "deployed", "destroyed", "salvaged"]
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "position": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "x": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 96
+                                    },
+                                    "y": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 56
+                                    }
+                                  },
+                                  "required": ["x", "y"]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "health": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 160
+                            },
+                            "ammunition_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 4
+                            },
+                            "repair_product_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 4
+                            },
+                            "last_fired_ms": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "ammunition_count": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 4
+                            },
+                            "ammunition_capacity": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 4
+                            },
+                            "operational_ready": {
+                              "type": "boolean"
+                            },
+                            "can_fire": {
+                              "const": false
+                            },
+                            "blocked_reasons": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 100
+                              },
+                              "maxItems": 8
+                            },
+                            "targets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "const": "tower"
+                                  },
+                                  "distance_cells": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 120
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "in_range": {
+                                    "type": "boolean"
+                                  },
+                                  "eligible": {
+                                    "const": false
+                                  },
+                                  "reason": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "kind",
+                                  "distance_cells",
+                                  "in_range",
+                                  "eligible",
+                                  "reason"
+                                ]
+                              },
+                              "maxItems": 1
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "state",
+                            "enabled",
+                            "position",
+                            "health",
+                            "ammunition_ids",
+                            "repair_product_ids",
+                            "last_fired_ms",
+                            "ammunition_count",
+                            "ammunition_capacity",
+                            "operational_ready",
+                            "can_fire",
+                            "blocked_reasons",
+                            "targets"
+                          ]
+                        },
+                        "maxItems": 16
+                      }
+                    },
+                    "required": ["version", "profiles", "combat_available", "units"]
+                  },
                   "manufacturing": {
                     "type": "object",
                     "additionalProperties": false,
@@ -8168,7 +9001,7 @@
                         "dissipated_mj": {
                           "type": "integer",
                           "minimum": 0,
-                          "maximum": 20000000
+                          "maximum": 9007199254740991
                         }
                       },
                       "required": ["id", "kind", "status", "power_w", "energy_mj", "dissipated_mj"]
@@ -8442,6 +9275,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",
@@ -8468,6 +9303,223 @@
       "inputSchema": {
         "type": "object",
         "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "expected_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999999999
+              },
+              "action": {
+                "const": "deploy_unit"
+              },
+              "unit_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "position": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 96
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 56
+                  }
+                },
+                "required": ["x", "y"]
+              }
+            },
+            "required": [
+              "version",
+              "command_id",
+              "match_id",
+              "expected_revision",
+              "action",
+              "unit_id",
+              "position"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "expected_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999999999
+              },
+              "action": {
+                "const": "set_unit_enabled"
+              },
+              "unit_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "version",
+              "command_id",
+              "match_id",
+              "expected_revision",
+              "action",
+              "unit_id",
+              "enabled"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "expected_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999999999
+              },
+              "action": {
+                "const": "load_unit_ammunition"
+              },
+              "unit_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "ammunition_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              }
+            },
+            "required": [
+              "version",
+              "command_id",
+              "match_id",
+              "expected_revision",
+              "action",
+              "unit_id",
+              "ammunition_id"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "expected_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999999999
+              },
+              "action": {
+                "const": "repair_unit"
+              },
+              "unit_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "product_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              }
+            },
+            "required": [
+              "version",
+              "command_id",
+              "match_id",
+              "expected_revision",
+              "action",
+              "unit_id",
+              "product_id"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "expected_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999999999
+              },
+              "action": {
+                "const": "salvage_unit"
+              },
+              "unit_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              }
+            },
+            "required": [
+              "version",
+              "command_id",
+              "match_id",
+              "expected_revision",
+              "action",
+              "unit_id"
+            ]
+          },
           {
             "type": "object",
             "additionalProperties": false,
@@ -10276,6 +11328,227 @@
                       "observations"
                     ]
                   },
+                  "units": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "version": {
+                        "const": "units-v1"
+                      },
+                      "profiles": {
+                        "const": {
+                          "sentry-turret": {
+                            "role": "defense",
+                            "max_health": 100,
+                            "range_cells": 16,
+                            "minimum_range_cells": 0,
+                            "cooldown_ms": 2000,
+                            "shot_energy_j": 500,
+                            "deployment_energy_j": 500,
+                            "ammunition_capacity": 4,
+                            "idle_power_w": 0,
+                            "material_effect": "Eligible HDPE housing: 100 health, 500 J deployment."
+                          },
+                          "armored-turret": {
+                            "role": "defense",
+                            "max_health": 140,
+                            "range_cells": 16,
+                            "minimum_range_cells": 0,
+                            "cooldown_ms": 2000,
+                            "shot_energy_j": 500,
+                            "deployment_energy_j": 750,
+                            "ammunition_capacity": 4,
+                            "idle_power_w": 0,
+                            "material_effect": "Eligible aluminum housing: 140 health, 750 J deployment; +40 health and +250 J versus HDPE."
+                          },
+                          "raid-launcher": {
+                            "role": "raider",
+                            "max_health": 160,
+                            "range_cells": 32,
+                            "minimum_range_cells": 8,
+                            "cooldown_ms": 5000,
+                            "shot_energy_j": 1000,
+                            "deployment_energy_j": 1000,
+                            "ammunition_capacity": 2,
+                            "idle_power_w": 0,
+                            "material_effect": "Graded steel chassis and two recovered treads: 160 health; deployable raiding platform."
+                          }
+                        }
+                      },
+                      "combat_available": {
+                        "const": false
+                      },
+                      "units": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "kind": {
+                              "enum": ["sentry-turret", "armored-turret", "raid-launcher"]
+                            },
+                            "state": {
+                              "enum": ["stowed", "deployed", "destroyed", "salvaged"]
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "position": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "x": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 96
+                                    },
+                                    "y": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 56
+                                    }
+                                  },
+                                  "required": ["x", "y"]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "health": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 160
+                            },
+                            "ammunition_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 4
+                            },
+                            "repair_product_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 4
+                            },
+                            "last_fired_ms": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "ammunition_count": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 4
+                            },
+                            "ammunition_capacity": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 4
+                            },
+                            "operational_ready": {
+                              "type": "boolean"
+                            },
+                            "can_fire": {
+                              "const": false
+                            },
+                            "blocked_reasons": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 100
+                              },
+                              "maxItems": 8
+                            },
+                            "targets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "const": "tower"
+                                  },
+                                  "distance_cells": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 120
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "in_range": {
+                                    "type": "boolean"
+                                  },
+                                  "eligible": {
+                                    "const": false
+                                  },
+                                  "reason": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "kind",
+                                  "distance_cells",
+                                  "in_range",
+                                  "eligible",
+                                  "reason"
+                                ]
+                              },
+                              "maxItems": 1
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "state",
+                            "enabled",
+                            "position",
+                            "health",
+                            "ammunition_ids",
+                            "repair_product_ids",
+                            "last_fired_ms",
+                            "ammunition_count",
+                            "ammunition_capacity",
+                            "operational_ready",
+                            "can_fire",
+                            "blocked_reasons",
+                            "targets"
+                          ]
+                        },
+                        "maxItems": 16
+                      }
+                    },
+                    "required": ["version", "profiles", "combat_available", "units"]
+                  },
                   "manufacturing": {
                     "type": "object",
                     "additionalProperties": false,
@@ -11139,7 +12412,7 @@
                         "dissipated_mj": {
                           "type": "integer",
                           "minimum": 0,
-                          "maximum": 20000000
+                          "maximum": 9007199254740991
                         }
                       },
                       "required": ["id", "kind", "status", "power_w", "energy_mj", "dissipated_mj"]
@@ -11428,6 +12701,8 @@
                       "INSPECTION_REQUIRED",
                       "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
+                      "UNIT_POWER",
+                      "UNIT_SITE",
                       "NOT_READY",
                       "INVARIANT_FAILED",
                       "OUTCOME_UNKNOWN",

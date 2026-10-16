@@ -25,6 +25,8 @@ const validators = new Map(
   ]),
 );
 export const messages = {
+  UNIT_POWER: "Recharge the shared base battery before deploying or servicing this unit.",
+  UNIT_SITE: "Choose a free, reachable cell on your side of the dump.",
   MANUFACTURING_REQUIREMENTS:
     "Preview the bill of materials for missing evidence, tested components or machines.",
   ROBOT_REQUIRED: "Use a robot to survey and recover this deposit.",

@@ -84,6 +84,10 @@
           <button type="button" id="enqueue-production" data-mutation="true" data-allowed="false">Queue approved manufacture</button>
           <div id="production-result" role="status" aria-live="polite"></div>
           <h3>Production queue</h3><div id="production-jobs"></div>
+          <h3>Defenses and raiding units</h3>
+          <p class="note">Manufacture a turret or raid launcher below, then deploy it to a free home-side cell. Load steel slugs while disabled. Attacks and tower damage arrive with combat.</p>
+          <div class="science-fields"><div><label for="unit-x">Deployment X</label><input id="unit-x" type="number" min="1" max="94" step="1" value="38"></div><div><label for="unit-y">Deployment Y</label><input id="unit-y" type="number" min="1" max="54" step="1" value="24"></div></div>
+          <div id="units-list"></div>
           <h3>Finished parts and installed equipment</h3><div id="production-products-list"></div>
         </section>
         <details class="panel equipment"><summary>Your base, robots and starter inventory</summary><div id="assets"></div><h3>Recorded starter stock</h3><p id="starter-stock"></p><p id="starter-total" class="note"></p></details>

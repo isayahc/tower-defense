@@ -299,6 +299,21 @@ export function createGame(request) {
         mine ? "YOUR BASE" : t.occupied ? "RIVAL BASE" : "AWAITING CREW",
       );
     }
+    for (const u of snapshot.units?.units ?? []) {
+      if (!u.position || u.state === "salvaged") continue;
+      make("circle", {
+        cx: u.position.x,
+        cy: u.position.y,
+        r: 1.5,
+        fill: u.state === "destroyed" ? "#888" : u.enabled ? "#58ddb0" : "#f3bc6b",
+        "data-unit-id": u.id,
+      });
+      make(
+        "text",
+        { x: u.position.x + 2, y: u.position.y, class: "map-label" },
+        u.kind === "raid-launcher" ? "RAID" : "DEF",
+      );
+    }
     for (const [i, robot] of snapshot.field.robots.entries()) {
       make("rect", {
         x: robot.position.x - 1,
@@ -623,9 +638,17 @@ export function createGame(request) {
       }
       jobs.append(row);
     }
+    renderUnits();
     const outputs = el("production-products-list");
     outputs.replaceChildren();
-    for (const p of state.products.filter((p) => p.state !== "consumed")) {
+    for (const p of state.products.filter(
+      (p) =>
+        p.state !== "consumed" &&
+        !snapshot.units?.units.some(
+          (u) =>
+            u.id === p.id || u.ammunition_ids.includes(p.id) || u.repair_product_ids.includes(p.id),
+        ),
+    )) {
       const row = node("div", undefined, "batch");
       row.append(
         node("strong", p.kind + " · " + p.state),
@@ -662,6 +685,129 @@ export function createGame(request) {
           ),
         );
       outputs.append(row);
+    }
+  }
+  function renderUnits() {
+    const list = el("units-list");
+    list.replaceChildren();
+    const state = snapshot.units;
+    if (el("unit-x").dataset.match !== snapshot.match_id) {
+      el("unit-x").value = snapshot.players.find((p) => p.you)?.slot === 1 ? "38" : "58";
+      el("unit-x").dataset.match = snapshot.match_id;
+    }
+    if (!state?.units.length) {
+      list.append(
+        node(
+          "p",
+          "No platforms yet. Manufacture a sentry turret, armored turret or raid launcher.",
+        ),
+      );
+      return;
+    }
+    for (const u of state.units) {
+      const spec = state.profiles[u.kind],
+        row = node("div", undefined, "job");
+      row.dataset.unitId = u.id;
+      row.append(
+        node("strong", u.kind + " · " + u.state + (u.enabled ? " · enabled" : " · disabled")),
+        node(
+          "p",
+          u.health +
+            " / " +
+            spec.max_health +
+            " health · " +
+            u.ammunition_count +
+            " / " +
+            u.ammunition_capacity +
+            " steel slugs · range " +
+            spec.minimum_range_cells +
+            "–" +
+            spec.range_cells +
+            " cells · " +
+            spec.cooldown_ms / 1000 +
+            " s cooldown · " +
+            spec.shot_energy_j +
+            " J per shot · idle " +
+            spec.idle_power_w +
+            " W",
+        ),
+        node("p", spec.material_effect),
+        node(
+          "p",
+          (u.operational_ready ? "Platform supplied. " : "Blocked: ") +
+            u.blocked_reasons.join(", "),
+        ),
+      );
+      if (u.position) row.append(node("p", "Deployed at " + u.position.x + ", " + u.position.y));
+      for (const t of u.targets)
+        row.append(
+          node(
+            "p",
+            "Opposing tower: " + (t.in_range ? "in range" : "out of range") + " · " + t.reason,
+          ),
+        );
+      const label = u.kind + " " + u.id.slice(0, 8);
+      if (u.state === "stowed")
+        row.append(
+          button(
+            "Deploy " + label + " (" + spec.deployment_energy_j + " J)",
+            () =>
+              action("deploy_unit", {
+                unit_id: u.id,
+                position: { x: Number(el("unit-x").value), y: Number(el("unit-y").value) },
+              }),
+            true,
+          ),
+        );
+      if (u.state === "deployed")
+        row.append(
+          button(
+            (u.enabled ? "Disable " : "Enable ") + label,
+            () => action("set_unit_enabled", { unit_id: u.id, enabled: !u.enabled }),
+            true,
+          ),
+        );
+      if (!u.enabled && ["stowed", "deployed"].includes(u.state)) {
+        const ammunition = snapshot.manufacturing.products.find(
+          (a) => a.kind === "steel-slug" && a.state === "available",
+        );
+        if (ammunition && u.ammunition_count < u.ammunition_capacity)
+          row.append(
+            button(
+              "Load steel slug into " + label,
+              () => action("load_unit_ammunition", { unit_id: u.id, ammunition_id: ammunition.id }),
+              true,
+            ),
+          );
+        const patch = snapshot.manufacturing.products.find(
+          (a) => a.kind === "steel-bracket" && a.state === "available",
+        );
+        if (patch && u.health < spec.max_health && u.repair_product_ids.length < 4)
+          row.append(
+            button(
+              "Repair " + label + " (bracket + 500 J)",
+              () => action("repair_unit", { unit_id: u.id, product_id: patch.id }),
+              true,
+            ),
+          );
+      }
+      if (!u.enabled && u.state !== "salvaged")
+        row.append(
+          button(
+            "Salvage " + label + " (300 J)",
+            () => action("salvage_unit", { unit_id: u.id }),
+            true,
+          ),
+        );
+      if (["stowed", "deployed"].includes(u.state))
+        row.append(
+          button(
+            "Destroy " + label,
+            () => action("destroy_manufactured_product", { product_id: u.id }),
+            true,
+          ),
+        );
+      list.append(row);
     }
   }
   for (const id of [
