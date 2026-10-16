@@ -493,7 +493,7 @@
                       "power_w": 250,
                       "materials": [
                         {
-                          "use": "steel-bracket",
+                          "use": "steel-slug",
                           "mass_g": 250
                         }
                       ],

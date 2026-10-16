@@ -601,6 +601,20 @@ export function createGame(request) {
         recipe.power_w +
         " W."
       : "";
+    const platform = snapshot.units?.profiles[recipe?.id];
+    if (platform)
+      el("production-requirements").textContent +=
+        " " +
+        platform.material_effect +
+        " Range " +
+        platform.minimum_range_cells +
+        "–" +
+        platform.range_cells +
+        " cells; " +
+        platform.ammunition_capacity +
+        " steel slugs; " +
+        platform.shot_energy_j +
+        " J per shot. Combat is pending.";
     const jobs = el("production-jobs");
     jobs.replaceChildren();
     for (const j of state.jobs) {
