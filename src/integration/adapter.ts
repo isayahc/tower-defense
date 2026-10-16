@@ -54,7 +54,9 @@ export class GameAdapter {
         });
       } catch {
         throw new IntegrationError(
-          name === "astra.game_read_match" ||
+          name === "astra.game_manufacturing_catalog" ||
+            name === "astra.game_manufacturing_preview" ||
+            name === "astra.game_read_match" ||
             name === "astra.game_science_catalog" ||
             name === "astra.game_evaluate" ||
             name === "astra.game_list_matches" ||

@@ -4,6 +4,8 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import captured from "./contract-v5.json" with { type: "json" };
 
 export const GAME_TOOLS = [
+  "astra.game_manufacturing_catalog",
+  "astra.game_manufacturing_preview",
   "astra.game_describe",
   "astra.game_science_catalog",
   "astra.game_evaluate",
@@ -23,6 +25,8 @@ const validators = new Map(
   ]),
 );
 export const messages = {
+  MANUFACTURING_REQUIREMENTS:
+    "Preview the bill of materials for missing evidence, tested components or machines.",
   ROBOT_REQUIRED: "Use a robot to survey and recover this deposit.",
   ROBOT_BUSY: "Interrupt the current robot job or wait for completion.",
   ROBOT_ENERGY: "Recharge the robot before dispatch; it needs enough energy to return.",
@@ -37,7 +41,7 @@ export const messages = {
   CONTRACT_MISMATCH:
     "The runtime has an unsupported schema. Install the documented Open-Industries version.",
   FULL_GAME_UNSUPPORTED:
-    "Full matches are not available yet. Manufacturing, combat and victory are still missing.",
+    "Full matches are not available yet. Combat and victory are still missing.",
   DISABLED: "The requested feature is disabled in the runtime configuration.",
   NOT_AVAILABLE: "The match, invitation or object is unavailable to this account.",
   CONFLICT: "State changed. Read a fresh snapshot before submitting a new command.",

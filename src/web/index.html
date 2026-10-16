@@ -57,7 +57,7 @@
         <section class="panel science-panel" aria-labelledby="science-heading">
           <p class="eyebrow">MATERIAL LAB</p><h3 id="science-heading">Inspect. Check. Recover.</h3>
           <p id="science-version" class="note"></p>
-          <p class="note">Bench readings are bounded game fixtures. Unknown grades stay unknown. Other processing machines and assembly jobs are still in development.</p>
+          <p class="note">Bench readings are bounded game fixtures. Unknown grades stay unknown. Use the construction queue below to make parts and machines from eligible batches and tested components.</p>
           <div class="science-fields">
             <div><label for="science-query">Evaluation</label><select id="science-query"><option value="use">Part suitability</option><option value="process">Processing plan</option><option value="substitution">Approved substitution</option><option value="component">Reusable component</option></select></div>
             <div><label for="science-target">Owned material or component</label><select id="science-target"></select></div>
@@ -70,11 +70,27 @@
           <details><summary>Material catalog and required equipment</summary><div id="science-catalog"></div></details>
           <h3>Reusable starter stock</h3><div id="science-components"></div>
         </section>
+        <section class="panel production-panel" aria-labelledby="production-heading">
+          <p class="eyebrow">CONSTRUCTION &amp; MANUFACTURING</p><h2 id="production-heading">Build from what you recovered.</h2>
+          <p id="production-storage" class="note"></p>
+          <div class="science-fields">
+            <div><label for="production-recipe">Manufacturing recipe</label><select id="production-recipe"></select></div>
+            <div><label for="production-batches">Material batches</label><select id="production-batches" multiple size="4"></select></div>
+            <div><label for="production-products">Manufactured parts</label><select id="production-products" multiple size="4"></select></div>
+            <div><label for="production-components">Tested component stock</label><select id="production-components" multiple size="4"></select></div>
+          </div>
+          <p id="production-requirements" class="note"></p>
+          <button type="button" id="preview-production" data-mutation="true">Review bill of materials</button>
+          <button type="button" id="enqueue-production" data-mutation="true" data-allowed="false">Queue approved manufacture</button>
+          <div id="production-result" role="status" aria-live="polite"></div>
+          <h3>Production queue</h3><div id="production-jobs"></div>
+          <h3>Finished parts and installed equipment</h3><div id="production-products-list"></div>
+        </section>
         <details class="panel equipment"><summary>Your base, robots and starter inventory</summary><div id="assets"></div><h3>Recorded starter stock</h3><p id="starter-stock"></p><p id="starter-total" class="note"></p></details>
         <div class="session-actions"><button type="button" id="finish-recovery" data-mutation="true">Finish recovery session</button><button type="button" id="end-session" class="secondary" data-mutation="true">End session for both crews</button><p class="note">After both crews process their cable, both can finish to archive the session.</p></div>
       </section>
     </section>
-    <section class="next" aria-labelledby="next-title"><div><p class="eyebrow">BEYOND RECOVERY</p><h2 id="next-title">From scrap to strategy.</h2><p>Broader material processing, manufacturing and combat are still being built. The recovery session is ready today.</p></div><button id="start-match" type="button" disabled aria-describedby="match-note">Start full match <span aria-hidden="true">↗</span></button><p id="match-note" class="note">Full matches are not available yet.</p></section>
+    <section class="next" aria-labelledby="next-title"><div><p class="eyebrow">BEYOND RECOVERY</p><h2 id="next-title">From scrap to strategy.</h2><p>Recover material, manufacture parts and construct equipment today. Combat and full-match victory are still being built.</p></div><button id="start-match" type="button" disabled aria-describedby="match-note">Start full match <span aria-hidden="true">↗</span></button><p id="match-note" class="note">Full matches are not available yet.</p></section>
   </main>
   <footer><span>CITY DUMP / BUILT ON OPEN-INDUSTRIES</span><span>Server-owned state. Persistent progress.</span></footer>
 </body>
