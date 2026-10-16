@@ -51,6 +51,7 @@ async function press(page: Page, name: string) {
         "astra.game_read_match",
         "astra.game_list_matches",
         "astra.game_science_catalog",
+        "astra.game_manufacturing_catalog",
       ].includes(operation);
     });
     await page.getByRole("button", { name, exact: true }).click();
@@ -217,6 +218,85 @@ async function recoverFamily(page: Page, slot: number, kind: string, recipe: str
   });
 }
 
+/** Use only visible owned choices; the server validates each exact bill of materials. */
+async function manufacturePart(page: Page, recipe: string, grade: string, minimumKg: number) {
+  await page.getByLabel("Manufacturing recipe", { exact: true }).selectOption(recipe);
+  const options = await page
+    .locator("#production-batches option")
+    .evaluateAll((options) =>
+      options.map((o) => ({ id: (o as HTMLOptionElement).value, label: o.textContent ?? "" })),
+    );
+  const input = options
+    .filter(
+      (o) => o.label.startsWith(grade) && Number(/· ([0-9.]+) kg/.exec(o.label)?.[1]) >= minimumKg,
+    )
+    .sort(
+      (a, b) =>
+        Number(/· ([0-9.]+) kg/.exec(a.label)?.[1]) - Number(/· ([0-9.]+) kg/.exec(b.label)?.[1]),
+    )[0];
+  assert(input);
+  await page.getByLabel("Material batches", { exact: true }).selectOption(input.id);
+  await page.getByLabel("Manufactured parts", { exact: true }).selectOption([]);
+  await page.getByLabel("Tested component stock", { exact: true }).selectOption([]);
+  await press(page, "Review bill of materials");
+  assert(
+    (await page.locator("#production-result").textContent())?.includes(
+      "Exact inputs will be reserved",
+    ),
+  );
+  await press(page, "Queue approved manufacture");
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll("#production-jobs .job")].every(
+        (j) => j.getAttribute("data-state") === "completed",
+      ),
+    undefined,
+    { timeout: 45000 },
+  );
+}
+async function constructPress(page: Page) {
+  await manufacturePart(page, "steel-bracket", "game-steel-v1", 1);
+  await manufacturePart(page, "steel-bracket", "game-steel-v1", 1);
+  await manufacturePart(page, "copper-conductor", "game-copper-v1", 0.1);
+  await page.getByLabel("Manufacturing recipe", { exact: true }).selectOption("metal-press");
+  await page.getByLabel("Material batches", { exact: true }).selectOption([]);
+  const parts = await page
+    .locator("#production-products option")
+    .evaluateAll((options) =>
+      options.map((o) => ({ id: (o as HTMLOptionElement).value, label: o.textContent ?? "" })),
+    );
+  await page
+    .getByLabel("Manufactured parts", { exact: true })
+    .selectOption(
+      parts
+        .filter(
+          (o) => o.label.startsWith("steel-bracket") || o.label.startsWith("copper-conductor"),
+        )
+        .map((o) => o.id),
+    );
+  const fastener = await page
+    .locator("#production-components option")
+    .filter({ hasText: /fastener/ })
+    .getAttribute("value");
+  assert(fastener);
+  await page.getByLabel("Tested component stock", { exact: true }).selectOption(fastener);
+  await press(page, "Review bill of materials");
+  assert(
+    (await page.locator("#production-result").textContent())?.includes(
+      "Exact inputs will be reserved",
+    ),
+  );
+  await press(page, "Queue approved manufacture");
+  await page
+    .getByRole("button", { name: "Disable metal-press", exact: true })
+    .waitFor({ timeout: 45000 });
+  await press(page, "Disable metal-press");
+  await press(page, "Enable metal-press");
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page
+    .locator(".production-panel")
+    .screenshot({ path: "test-results/manufacturing-desktop.png" });
+}
 try {
   const runtime = await launchRuntime(checkout);
   cleanups.push(() => runtime.close());
@@ -429,7 +509,12 @@ try {
   // A crew command invalidates the shared revision and clears the other crew's preview.
   // Keep these approval/click flows sequential so neither test races a stale approval.
   await recoverFamily(a, 1, "construction", "bench-recover-steel", "steel-bracket");
+  await constructPress(a);
   await recoverFamily(b, 2, "vehicle", "isolate-vehicle", "aluminum-housing");
+  await manufacturePart(b, "copper-conductor", "game-copper-v1", 0.1);
+  await b
+    .locator(".production-panel")
+    .screenshot({ path: "test-results/manufacturing-mobile.png" });
   await press(a, "Return and recharge · robot 1");
   await a.waitForFunction(
     () => document.getElementById("robots")?.textContent?.includes("8.00 / 8 kJ"),
@@ -466,7 +551,7 @@ try {
   assert.deepEqual(unexpectedResponses, []);
   assert.deepEqual(errors, []);
   console.log(
-    "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, steel recovery, vehicle isolation and aluminum use, private evidence, reconnect, completion, screenshots and no console errors",
+    "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, steel recovery, vehicle isolation and aluminum use, desktop press construction and mobile component manufacture, private evidence, reconnect, completion, screenshots and no console errors",
   );
 } catch (error) {
   for (const [i, context] of browser.contexts().entries())

@@ -18,6 +18,8 @@ export function createGame(request) {
   let generation = 0;
   let listed = [];
   let invite = null;
+  let productionCatalog;
+  let productionPreview;
   let scienceCatalog;
   let evaluation;
   let interacting = false;
@@ -413,7 +415,7 @@ export function createGame(request) {
       target = s.world.deposits.find((d) => d.id === selection);
     for (const [i, r] of s.field.robots.entries()) {
       const job = s.field.jobs.find((j) => j.id === r.job_id);
-      const busy = job && ["running", "paused"].includes(job.state);
+      const busy = r.retired || (job && ["running", "paused"].includes(job.state));
       const row = node("div", undefined, "job");
       row.append(node("h3", `Robot ${i + 1}`));
       row.append(
@@ -479,17 +481,213 @@ export function createGame(request) {
           button(
             `${label} · robot ${i + 1}`,
             () => action(cmd, { robot_id: r.id }),
-            active && (cmd === "retreat_robot" || (cmd === "interrupt_robot" ? busy : !busy)),
+            !r.retired &&
+              active &&
+              (cmd === "retreat_robot" || (cmd === "interrupt_robot" ? busy : !busy)),
           ),
         );
       area.append(row);
     }
   }
   async function loadCatalog(epoch) {
-    if (scienceCatalog || !snapshot) return;
+    if (!snapshot) return;
+    if (!productionCatalog) {
+      const production = await api("manufacturing_catalog", { match_id: snapshot.match_id });
+      if (epoch === generation) productionCatalog = production.catalog;
+    }
+    if (scienceCatalog) return;
     const result = await api("science_catalog", { match_id: snapshot.match_id });
     if (epoch === generation) scienceCatalog = result.catalog;
   }
+  function productionSelection() {
+    return {
+      recipe_id: el("production-recipe").value,
+      ...Object.fromEntries(
+        ["batches", "products", "components"].map((name, i) => [
+          ["batch_ids", "product_ids", "component_ids"][i],
+          [...el("production-" + name).selectedOptions].map((o) => o.value),
+        ]),
+      ),
+    };
+  }
+  function clearProduction() {
+    productionPreview = undefined;
+    el("production-result").replaceChildren();
+    el("enqueue-production").dataset.allowed = "false";
+  }
+  function renderProduction() {
+    if (!snapshot || !productionCatalog) return;
+    if (productionPreview && productionPreview.revision !== snapshot.revision) clearProduction();
+    const update = (id, rows) => {
+      const select = el(id),
+        selected = new Set([...select.selectedOptions].map((o) => o.value)),
+        signature = JSON.stringify(rows);
+      if (select.dataset.options === signature) return;
+      select.dataset.options = signature;
+      select.replaceChildren();
+      for (const [value, label] of rows) {
+        const option = node("option", label);
+        option.value = value;
+        option.selected = selected.has(value);
+        select.append(option);
+      }
+    };
+    update(
+      "production-recipe",
+      productionCatalog.recipes.map((r) => [r.id, r.id.replaceAll("-", " ")]),
+    );
+    update(
+      "production-batches",
+      snapshot.batches
+        .filter((b) => b.state === "available")
+        .map((b) => {
+          const e = snapshot.science.batches.find((e) => e.id === b.id)?.evidence;
+          return [b.id, (e?.grade ?? "ungraded") + " · " + kg(b.mass_g) + " · " + b.id.slice(0, 8)];
+        }),
+    );
+    const state = snapshot.manufacturing ?? {
+      products: [],
+      jobs: [],
+      storage_used: 0,
+      storage_slots: 16,
+    };
+    update(
+      "production-products",
+      state.products
+        .filter((p) => p.state === "available")
+        .map((p) => [p.id, p.kind + " · " + kg(p.mass_g) + " · " + p.id.slice(0, 8)]),
+    );
+    update(
+      "production-components",
+      snapshot.science.components
+        .filter((c) => c.tested && c.condition === "sound")
+        .map((c) => [c.id, c.quantity + " × " + c.kind + " · " + c.id.slice(0, 8)]),
+    );
+    el("production-storage").textContent =
+      state.storage_used +
+      " / " +
+      state.storage_slots +
+      " finished-part slots. Inputs stay reserved while queued or paused; spent energy is retained on cancellation.";
+    const recipe = productionCatalog.recipes.find((r) => r.id === el("production-recipe").value);
+    el("production-requirements").textContent = recipe
+      ? "Requires " +
+        recipe.station +
+        "; " +
+        recipe.materials
+          .map((m) => m.mass_g + " g " + m.use)
+          .concat(
+            recipe.products.map((p) => p.quantity + " " + p.kind),
+            recipe.components.map((c) => c.quantity + " tested " + c.kind),
+          )
+          .join(", ") +
+        ". " +
+        recipe.duration_ms / 1000 +
+        " s at " +
+        recipe.power_w +
+        " W."
+      : "";
+    const jobs = el("production-jobs");
+    jobs.replaceChildren();
+    for (const j of state.jobs) {
+      const row = node("div", undefined, "job");
+      row.dataset.state = j.state;
+      row.append(
+        node("strong", j.recipe + " · " + j.state),
+        node(
+          "p",
+          (j.reason ?? "") +
+            " · " +
+            j.work_ms / 1000 +
+            " / " +
+            j.duration_ms / 1000 +
+            " s · " +
+            j.energy_mj / 1000 +
+            " J",
+        ),
+      );
+      if (["waiting", "running", "paused"].includes(j.state)) {
+        row.append(
+          button(
+            "Cancel production " + j.id.slice(0, 8),
+            () => action("cancel_job", { job_id: j.id }),
+            true,
+          ),
+        );
+        row.append(
+          button(
+            (j.state === "paused" ? "Resume" : "Pause") + " production " + j.id.slice(0, 8),
+            () => action(j.state === "paused" ? "resume_job" : "pause_job", { job_id: j.id }),
+            true,
+          ),
+        );
+      }
+      jobs.append(row);
+    }
+    const outputs = el("production-products-list");
+    outputs.replaceChildren();
+    for (const p of state.products.filter((p) => p.state !== "consumed")) {
+      const row = node("div", undefined, "batch");
+      row.append(
+        node("strong", p.kind + " · " + p.state),
+        node(
+          "p",
+          kg(p.mass_g) +
+            " recovered stock; " +
+            p.components.map((c) => c.quantity + " " + c.kind).join(", "),
+        ),
+      );
+      if (p.state === "installed") {
+        if (["machine", "upgrade"].includes(p.category))
+          row.append(
+            button(
+              (p.enabled ? "Disable " : "Enable ") + p.kind,
+              () => action("set_production_machine", { machine_id: p.id, enabled: !p.enabled }),
+              true,
+            ),
+          );
+        row.append(
+          button(
+            "Destroy " + p.kind,
+            () => action("destroy_manufactured_product", { product_id: p.id }),
+            true,
+          ),
+        );
+      }
+      if (p.state === "available")
+        row.append(
+          button(
+            "Discard " + p.kind,
+            () => action("destroy_manufactured_product", { product_id: p.id }),
+            true,
+          ),
+        );
+      outputs.append(row);
+    }
+  }
+  for (const id of [
+    "production-recipe",
+    "production-batches",
+    "production-products",
+    "production-components",
+  ])
+    el(id).addEventListener("change", () => {
+      clearProduction();
+      renderProduction();
+    });
+  el("preview-production").addEventListener("click", () =>
+    work(async () => {
+      if (!snapshot) return;
+      const selection = productionSelection(),
+        result = await api("manufacturing_preview", { match_id: snapshot.match_id, ...selection });
+      productionPreview = { revision: result.revision, selection };
+      el("production-result").textContent =
+        result.result.message + " Next: " + result.result.next_actions.join(", ");
+      el("enqueue-production").dataset.allowed = String(result.result.status === "eligible");
+    }),
+  );
+  el("enqueue-production").addEventListener("click", () => {
+    if (productionPreview) void action("enqueue_manufacturing", productionPreview.selection);
+  });
   function clearEvaluation() {
     evaluation = undefined;
     el("science-result").replaceChildren();
@@ -568,7 +766,8 @@ export function createGame(request) {
     const ready =
       s.status === "active" &&
       s.machines[0].status === "ready" &&
-      !s.jobs.some((j) => ["running", "paused"].includes(j.state));
+      !s.jobs.some((j) => ["running", "paused"].includes(j.state)) &&
+      !s.manufacturing?.jobs.some((j) => ["waiting", "running", "paused"].includes(j.state));
     for (const c of s.science.components) {
       const row = node("div", undefined, "batch");
       row.append(
@@ -612,7 +811,7 @@ export function createGame(request) {
         ? "Share the invitation with one other player. Work begins when they join."
         : s.status === "completed"
           ? `Ended: ${s.completion.reason.replaceAll("-", " ")}. Your material and history remain saved. No combat result is recorded.`
-          : "Survey, recover, haul and inspect scrap with your robots. Manufacturing and combat remain in development.";
+          : "Survey, recover, haul and inspect scrap with your robots. Make parts and construct equipment from inspected material. Combat remains in development.";
     el("invitation").hidden = s.status !== "waiting" || slot !== 1;
     el("invite-match").value = s.match_id;
     el("invite-code").value = invite?.id === s.match_id ? invite.code : "";
@@ -759,6 +958,7 @@ export function createGame(request) {
       batches.append(row);
     }
     renderScience();
+    renderProduction();
     renderRobots();
     const assets = el("assets");
     assets.replaceChildren();
@@ -769,6 +969,14 @@ export function createGame(request) {
       for (const c of a.components)
         ul.append(node("li", `${c.quantity} × ${c.kind} (${kg(c.unit_mass_g)} each)`));
       details.append(ul);
+      if (["solar", "robot", "fabricator"].includes(a.kind))
+        details.append(
+          button(
+            `Dismantle ${a.label} for components`,
+            () => action("salvage_starter_asset", { asset_id: a.id }),
+            a.status !== "destroyed",
+          ),
+        );
       assets.append(details);
     }
     el("starter-stock").textContent = s.base.inventory
@@ -847,7 +1055,13 @@ export function createGame(request) {
     const chosen = evaluation.selection;
     void action("start_material_process", {
       batch_id: chosen.target_id,
-      machine_id: snapshot.machines[0].id,
+      machine_id:
+        snapshot.manufacturing?.products.find(
+          (p) =>
+            p.kind === scienceCatalog.recipes.find((r) => r.id === chosen.design_id)?.machine &&
+            p.state === "installed" &&
+            p.enabled,
+        )?.id ?? snapshot.machines[0].id,
       recipe_id: chosen.design_id,
     });
   });
@@ -905,6 +1119,8 @@ export function createGame(request) {
       if (!authenticated) {
         generation++;
         snapshot = undefined;
+        productionCatalog = undefined;
+        clearProduction();
         scienceCatalog = undefined;
         clearEvaluation();
         pending = undefined;

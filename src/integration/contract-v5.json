@@ -41,7 +41,10 @@
       "interrupt-retreat",
       "sensor-upgrade-catalog",
       "all-initial-waste-recovery",
-      "cold-hazard-isolation"
+      "cold-hazard-isolation",
+      "machine-construction",
+      "manufacturing-queues",
+      "tested-component-assembly"
     ],
     "unsupported": [
       "sensor-kit-manufacturing",
@@ -53,6 +56,775 @@
     ]
   },
   "tools": [
+    {
+      "name": "astra.game_manufacturing_catalog",
+      "description": "Read declared bills of materials, machine requirements, storage limits, time and power fixtures.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "const": 5
+          },
+          "match_id": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          }
+        },
+        "required": ["version", "match_id"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "catalog": {
+                "const": {
+                  "version": "manufacturing-v1",
+                  "recipes": [
+                    {
+                      "id": "copper-conductor",
+                      "category": "part",
+                      "station": "bench",
+                      "duration_ms": 4000,
+                      "power_w": 250,
+                      "materials": [
+                        {
+                          "use": "copper-conductor",
+                          "mass_g": 100
+                        }
+                      ],
+                      "products": [],
+                      "components": []
+                    },
+                    {
+                      "id": "steel-bracket",
+                      "category": "part",
+                      "station": "bench",
+                      "duration_ms": 4000,
+                      "power_w": 250,
+                      "materials": [
+                        {
+                          "use": "steel-bracket",
+                          "mass_g": 1000
+                        }
+                      ],
+                      "products": [],
+                      "components": []
+                    },
+                    {
+                      "id": "aluminum-housing",
+                      "category": "part",
+                      "station": "metal-press",
+                      "duration_ms": 4000,
+                      "power_w": 250,
+                      "materials": [
+                        {
+                          "use": "aluminum-housing",
+                          "mass_g": 300
+                        }
+                      ],
+                      "products": [],
+                      "components": []
+                    },
+                    {
+                      "id": "hdpe-housing",
+                      "category": "part",
+                      "station": "bench",
+                      "duration_ms": 4000,
+                      "power_w": 250,
+                      "materials": [
+                        {
+                          "use": "hdpe-housing",
+                          "mass_g": 200
+                        }
+                      ],
+                      "products": [],
+                      "components": []
+                    },
+                    {
+                      "id": "glass-filler",
+                      "category": "part",
+                      "station": "bench",
+                      "duration_ms": 4000,
+                      "power_w": 250,
+                      "materials": [
+                        {
+                          "use": "glass-filler",
+                          "mass_g": 500
+                        }
+                      ],
+                      "products": [],
+                      "components": []
+                    },
+                    {
+                      "id": "traction-tread",
+                      "category": "part",
+                      "station": "bench",
+                      "duration_ms": 4000,
+                      "power_w": 250,
+                      "materials": [
+                        {
+                          "use": "traction-tread",
+                          "mass_g": 500
+                        }
+                      ],
+                      "products": [],
+                      "components": []
+                    },
+                    {
+                      "id": "steel-chassis",
+                      "category": "part",
+                      "station": "metal-press",
+                      "duration_ms": 4000,
+                      "power_w": 250,
+                      "materials": [
+                        {
+                          "use": "steel-bracket",
+                          "mass_g": 8000
+                        }
+                      ],
+                      "products": [],
+                      "components": []
+                    },
+                    {
+                      "id": "metal-press",
+                      "category": "machine",
+                      "station": "bench",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "fastener",
+                          "quantity": 4
+                        }
+                      ],
+                      "requirements": []
+                    },
+                    {
+                      "id": "furnace",
+                      "category": "machine",
+                      "station": "bench",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "glass-filler",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "fastener",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "insulated-wire",
+                          "quantity": 1
+                        }
+                      ],
+                      "requirements": []
+                    },
+                    {
+                      "id": "polymer-processor",
+                      "category": "machine",
+                      "station": "bench",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "hdpe-housing",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "fastener",
+                          "quantity": 2
+                        }
+                      ],
+                      "requirements": ["furnace"]
+                    },
+                    {
+                      "id": "fabricator",
+                      "category": "machine",
+                      "station": "bench",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "fastener",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "drive",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "controller",
+                          "quantity": 1
+                        }
+                      ],
+                      "requirements": []
+                    },
+                    {
+                      "id": "solar-array",
+                      "category": "machine",
+                      "station": "bench",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "solar-panel",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "charge-controller",
+                          "quantity": 1
+                        }
+                      ],
+                      "requirements": []
+                    },
+                    {
+                      "id": "charging-port",
+                      "category": "machine",
+                      "station": "bench",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "hdpe-housing",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "fastener",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "insulated-wire",
+                          "quantity": 1
+                        }
+                      ],
+                      "requirements": []
+                    },
+                    {
+                      "id": "solar-reflector",
+                      "category": "upgrade",
+                      "station": "fabricator",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "glass-filler",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "fastener",
+                          "quantity": 2
+                        }
+                      ],
+                      "requirements": []
+                    },
+                    {
+                      "id": "scrap-barricade",
+                      "category": "defense",
+                      "station": "fabricator",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-bracket",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "traction-tread",
+                          "quantity": 1
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "fastener",
+                          "quantity": 2
+                        }
+                      ],
+                      "requirements": []
+                    },
+                    {
+                      "id": "scavenger-robot",
+                      "category": "robot",
+                      "station": "fabricator",
+                      "duration_ms": 8000,
+                      "power_w": 500,
+                      "materials": [],
+                      "products": [
+                        {
+                          "kind": "steel-chassis",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "copper-conductor",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "hdpe-housing",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "traction-tread",
+                          "quantity": 2
+                        }
+                      ],
+                      "components": [
+                        {
+                          "kind": "motor",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "wheel",
+                          "quantity": 2
+                        },
+                        {
+                          "kind": "robot-battery",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "camera",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "depth-sensor",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "controller",
+                          "quantity": 1
+                        },
+                        {
+                          "kind": "magnetic-inductive-probe",
+                          "quantity": 1
+                        }
+                      ],
+                      "requirements": []
+                    }
+                  ],
+                  "storage_slots": 16,
+                  "queue_limit": 8,
+                  "retained_job_limit": 64,
+                  "scope": "modeled-parts-and-assembly-not-electronics-fabrication"
+                }
+              }
+            },
+            "required": ["version", "catalog"]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "error": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "code": {
+                    "enum": [
+                      "AUTH_REQUIRED",
+                      "INVALID_REQUEST",
+                      "DISABLED",
+                      "NOT_AVAILABLE",
+                      "CONFLICT",
+                      "COMMAND_ID_REUSED",
+                      "LIMIT_REACHED",
+                      "SCHEDULER_UNAVAILABLE",
+                      "MATCH_INACTIVE",
+                      "DEPOSIT_EMPTY",
+                      "ROBOT_REQUIRED",
+                      "LEGACY_DEPOSIT",
+                      "ROBOT_BUSY",
+                      "ROBOT_ENERGY",
+                      "ROUTE_BLOCKED",
+                      "SENSOR_UNAVAILABLE",
+                      "STALE_TARGET",
+                      "CLASS_UNSUPPORTED",
+                      "CARGO_FULL",
+                      "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
+                      "INVALID_FEEDSTOCK",
+                      "NOT_READY",
+                      "INVARIANT_FAILED",
+                      "OUTCOME_UNKNOWN",
+                      "UNAVAILABLE",
+                      "INVALID_RESULT"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 256
+                  }
+                },
+                "required": ["code", "message"]
+              }
+            },
+            "required": ["error"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "astra.game_manufacturing_preview",
+      "description": "Preview exact owned material, manufactured-part and tested-component IDs without reservation or hidden truth.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "const": 5
+          },
+          "match_id": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          },
+          "recipe_id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "batch_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            },
+            "maxItems": 1
+          },
+          "product_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            },
+            "maxItems": 16
+          },
+          "component_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            },
+            "maxItems": 32
+          }
+        },
+        "required": [
+          "version",
+          "match_id",
+          "recipe_id",
+          "batch_ids",
+          "product_ids",
+          "component_ids"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "result": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "status": {
+                        "const": "eligible"
+                      },
+                      "code": {
+                        "type": "string",
+                        "maxLength": 60
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      "next_actions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "maxItems": 8
+                      },
+                      "recipe_id": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "station_id": {
+                        "type": "string",
+                        "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                      },
+                      "duration_ms": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 20000
+                      },
+                      "power_w": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000
+                      },
+                      "energy_j": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 20000
+                      },
+                      "materials": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "mass_g": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 10000
+                            },
+                            "material": {
+                              "enum": ["copper", "steel", "aluminum", "hdpe", "glass", "rubber"]
+                            }
+                          },
+                          "required": ["id", "mass_g", "material"]
+                        },
+                        "maxItems": 1
+                      },
+                      "products": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                        },
+                        "maxItems": 16
+                      },
+                      "components": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "quantity": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 100
+                            },
+                            "unit_mass_g": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 100000
+                            }
+                          },
+                          "required": ["id", "kind", "quantity", "unit_mass_g"]
+                        },
+                        "maxItems": 32
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "code",
+                      "message",
+                      "next_actions",
+                      "recipe_id",
+                      "station_id",
+                      "duration_ms",
+                      "power_w",
+                      "energy_j",
+                      "materials",
+                      "products",
+                      "components"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "status": {
+                        "const": "ineligible"
+                      },
+                      "code": {
+                        "type": "string",
+                        "maxLength": 60
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      "next_actions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "maxItems": 8
+                      },
+                      "recipe_id": {
+                        "type": "string",
+                        "maxLength": 100
+                      }
+                    },
+                    "required": ["status", "code", "message", "next_actions", "recipe_id"]
+                  }
+                ]
+              }
+            },
+            "required": ["version", "match_id", "revision", "result"]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "error": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "code": {
+                    "enum": [
+                      "AUTH_REQUIRED",
+                      "INVALID_REQUEST",
+                      "DISABLED",
+                      "NOT_AVAILABLE",
+                      "CONFLICT",
+                      "COMMAND_ID_REUSED",
+                      "LIMIT_REACHED",
+                      "SCHEDULER_UNAVAILABLE",
+                      "MATCH_INACTIVE",
+                      "DEPOSIT_EMPTY",
+                      "ROBOT_REQUIRED",
+                      "LEGACY_DEPOSIT",
+                      "ROBOT_BUSY",
+                      "ROBOT_ENERGY",
+                      "ROUTE_BLOCKED",
+                      "SENSOR_UNAVAILABLE",
+                      "STALE_TARGET",
+                      "CLASS_UNSUPPORTED",
+                      "CARGO_FULL",
+                      "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
+                      "INVALID_FEEDSTOCK",
+                      "NOT_READY",
+                      "INVARIANT_FAILED",
+                      "OUTCOME_UNKNOWN",
+                      "UNAVAILABLE",
+                      "INVALID_RESULT"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 256
+                  }
+                },
+                "required": ["code", "message"]
+              }
+            },
+            "required": ["error"]
+          }
+        ]
+      }
+    },
     {
       "name": "astra.game_science_catalog",
       "description": "Read the validated material catalog pinned to this participant match. Reference science and bounded game fixtures are distinct.",
@@ -625,6 +1397,7 @@
                       "CLASS_UNSUPPORTED",
                       "CARGO_FULL",
                       "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
                       "NOT_READY",
                       "INVARIANT_FAILED",
@@ -1094,6 +1867,7 @@
                       "CLASS_UNSUPPORTED",
                       "CARGO_FULL",
                       "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
                       "NOT_READY",
                       "INVARIANT_FAILED",
@@ -1219,6 +1993,7 @@
                       "CLASS_UNSUPPORTED",
                       "CARGO_FULL",
                       "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
                       "NOT_READY",
                       "INVARIANT_FAILED",
@@ -1326,7 +2101,10 @@
                   "interrupt-retreat",
                   "sensor-upgrade-catalog",
                   "all-initial-waste-recovery",
-                  "cold-hazard-isolation"
+                  "cold-hazard-isolation",
+                  "machine-construction",
+                  "manufacturing-queues",
+                  "tested-component-assembly"
                 ]
               },
               "unsupported": {
@@ -1387,6 +2165,7 @@
                       "CLASS_UNSUPPORTED",
                       "CARGO_FULL",
                       "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
                       "NOT_READY",
                       "INVARIANT_FAILED",
@@ -1829,7 +2608,7 @@
                           },
                           "required": ["kind", "quantity", "unit_mass_g"]
                         },
-                        "maxItems": 10
+                        "maxItems": 128
                       },
                       "starter_ledger": {
                         "type": "array",
@@ -1865,7 +2644,9 @@
                         "additionalProperties": false,
                         "properties": {
                           "solar_w": {
-                            "const": 100
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000
                           },
                           "capacity_mj": {
                             "const": 20000000
@@ -1963,6 +2744,9 @@
                               "type": "string",
                               "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
                             },
+                            "retired": {
+                              "type": "boolean"
+                            },
                             "position": {
                               "type": "object",
                               "additionalProperties": false,
@@ -2006,7 +2790,9 @@
                               "maximum": 8000000
                             },
                             "initial_mj": {
-                              "const": 8000000
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 8000000
                             },
                             "charged_mj": {
                               "type": "integer",
@@ -2084,7 +2870,7 @@
                             "cargo"
                           ]
                         },
-                        "maxItems": 2
+                        "maxItems": 8
                       },
                       "jobs": {
                         "type": "array",
@@ -2328,6 +3114,252 @@
                       "jobs",
                       "observations"
                     ]
+                  },
+                  "manufacturing": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "version": {
+                        "const": "manufacturing-v1"
+                      },
+                      "storage_used": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 128
+                      },
+                      "storage_slots": {
+                        "const": 16
+                      },
+                      "products": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "category": {
+                              "enum": ["part", "machine", "robot", "upgrade", "defense"]
+                            },
+                            "state": {
+                              "enum": [
+                                "available",
+                                "reserved",
+                                "installed",
+                                "destroyed",
+                                "consumed"
+                              ]
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "contents": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1000000
+                              }
+                            },
+                            "components": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "unit_mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                  }
+                                },
+                                "required": ["id", "kind", "quantity", "unit_mass_g"]
+                              },
+                              "maxItems": 128
+                            },
+                            "source_job_id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "mass_g": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "category",
+                            "state",
+                            "enabled",
+                            "contents",
+                            "components",
+                            "source_job_id",
+                            "mass_g"
+                          ]
+                        },
+                        "maxItems": 128
+                      },
+                      "jobs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "machine_id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "recipe": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "state": {
+                              "enum": [
+                                "waiting",
+                                "running",
+                                "paused",
+                                "completed",
+                                "cancelled",
+                                "failed"
+                              ]
+                            },
+                            "reason": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "duration_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20000
+                            },
+                            "work_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20000
+                            },
+                            "energy_mj": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 10000000
+                            },
+                            "material_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 10000
+                                  },
+                                  "material": {
+                                    "enum": [
+                                      "copper",
+                                      "steel",
+                                      "aluminum",
+                                      "hdpe",
+                                      "glass",
+                                      "rubber"
+                                    ]
+                                  }
+                                },
+                                "required": ["id", "mass_g", "material"]
+                              },
+                              "maxItems": 1
+                            },
+                            "product_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 16
+                            },
+                            "component_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "unit_mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                  }
+                                },
+                                "required": ["id", "kind", "quantity", "unit_mass_g"]
+                              },
+                              "maxItems": 32
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "machine_id",
+                            "recipe",
+                            "state",
+                            "reason",
+                            "duration_ms",
+                            "work_ms",
+                            "energy_mj",
+                            "material_inputs",
+                            "product_inputs",
+                            "component_inputs"
+                          ]
+                        },
+                        "maxItems": 64
+                      }
+                    },
+                    "required": ["version", "storage_used", "storage_slots", "products", "jobs"]
                   },
                   "legacy_recovery": {
                     "type": "boolean"
@@ -2665,7 +3697,7 @@
                           ],
                           "additionalProperties": false
                         },
-                        "maxItems": 10
+                        "maxItems": 128
                       },
                       "observations": {
                         "type": "array",
@@ -3093,6 +4125,9 @@
                           "enum": [
                             "strip-cable",
                             "recover-cable-residue",
+                            "form-steel",
+                            "form-aluminum",
+                            "mold-hdpe",
                             "inspect-batch",
                             "inspect-component",
                             "bench-recover-steel",
@@ -3112,7 +4147,7 @@
                         "pause_reason": {
                           "anyOf": [
                             {
-                              "enum": ["requested", "power"]
+                              "enum": ["requested", "power", "machine-disabled"]
                             },
                             {
                               "type": "null"
@@ -3223,6 +4258,7 @@
                       "CLASS_UNSUPPORTED",
                       "CARGO_FULL",
                       "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
                       "NOT_READY",
                       "INVARIANT_FAILED",
@@ -3673,7 +4709,7 @@
                           },
                           "required": ["kind", "quantity", "unit_mass_g"]
                         },
-                        "maxItems": 10
+                        "maxItems": 128
                       },
                       "starter_ledger": {
                         "type": "array",
@@ -3709,7 +4745,9 @@
                         "additionalProperties": false,
                         "properties": {
                           "solar_w": {
-                            "const": 100
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000
                           },
                           "capacity_mj": {
                             "const": 20000000
@@ -3807,6 +4845,9 @@
                               "type": "string",
                               "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
                             },
+                            "retired": {
+                              "type": "boolean"
+                            },
                             "position": {
                               "type": "object",
                               "additionalProperties": false,
@@ -3850,7 +4891,9 @@
                               "maximum": 8000000
                             },
                             "initial_mj": {
-                              "const": 8000000
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 8000000
                             },
                             "charged_mj": {
                               "type": "integer",
@@ -3928,7 +4971,7 @@
                             "cargo"
                           ]
                         },
-                        "maxItems": 2
+                        "maxItems": 8
                       },
                       "jobs": {
                         "type": "array",
@@ -4172,6 +5215,252 @@
                       "jobs",
                       "observations"
                     ]
+                  },
+                  "manufacturing": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "version": {
+                        "const": "manufacturing-v1"
+                      },
+                      "storage_used": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 128
+                      },
+                      "storage_slots": {
+                        "const": 16
+                      },
+                      "products": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "category": {
+                              "enum": ["part", "machine", "robot", "upgrade", "defense"]
+                            },
+                            "state": {
+                              "enum": [
+                                "available",
+                                "reserved",
+                                "installed",
+                                "destroyed",
+                                "consumed"
+                              ]
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "contents": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1000000
+                              }
+                            },
+                            "components": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "unit_mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                  }
+                                },
+                                "required": ["id", "kind", "quantity", "unit_mass_g"]
+                              },
+                              "maxItems": 128
+                            },
+                            "source_job_id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "mass_g": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "category",
+                            "state",
+                            "enabled",
+                            "contents",
+                            "components",
+                            "source_job_id",
+                            "mass_g"
+                          ]
+                        },
+                        "maxItems": 128
+                      },
+                      "jobs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "machine_id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "recipe": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "state": {
+                              "enum": [
+                                "waiting",
+                                "running",
+                                "paused",
+                                "completed",
+                                "cancelled",
+                                "failed"
+                              ]
+                            },
+                            "reason": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "duration_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20000
+                            },
+                            "work_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20000
+                            },
+                            "energy_mj": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 10000000
+                            },
+                            "material_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 10000
+                                  },
+                                  "material": {
+                                    "enum": [
+                                      "copper",
+                                      "steel",
+                                      "aluminum",
+                                      "hdpe",
+                                      "glass",
+                                      "rubber"
+                                    ]
+                                  }
+                                },
+                                "required": ["id", "mass_g", "material"]
+                              },
+                              "maxItems": 1
+                            },
+                            "product_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 16
+                            },
+                            "component_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "unit_mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                  }
+                                },
+                                "required": ["id", "kind", "quantity", "unit_mass_g"]
+                              },
+                              "maxItems": 32
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "machine_id",
+                            "recipe",
+                            "state",
+                            "reason",
+                            "duration_ms",
+                            "work_ms",
+                            "energy_mj",
+                            "material_inputs",
+                            "product_inputs",
+                            "component_inputs"
+                          ]
+                        },
+                        "maxItems": 64
+                      }
+                    },
+                    "required": ["version", "storage_used", "storage_slots", "products", "jobs"]
                   },
                   "legacy_recovery": {
                     "type": "boolean"
@@ -4509,7 +5798,7 @@
                           ],
                           "additionalProperties": false
                         },
-                        "maxItems": 10
+                        "maxItems": 128
                       },
                       "observations": {
                         "type": "array",
@@ -4937,6 +6226,9 @@
                           "enum": [
                             "strip-cable",
                             "recover-cable-residue",
+                            "form-steel",
+                            "form-aluminum",
+                            "mold-hdpe",
                             "inspect-batch",
                             "inspect-component",
                             "bench-recover-steel",
@@ -4956,7 +6248,7 @@
                         "pause_reason": {
                           "anyOf": [
                             {
-                              "enum": ["requested", "power"]
+                              "enum": ["requested", "power", "machine-disabled"]
                             },
                             {
                               "type": "null"
@@ -5063,6 +6355,7 @@
                       "CLASS_UNSUPPORTED",
                       "CARGO_FULL",
                       "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
                       "NOT_READY",
                       "INVARIANT_FAILED",
@@ -5505,7 +6798,7 @@
                           },
                           "required": ["kind", "quantity", "unit_mass_g"]
                         },
-                        "maxItems": 10
+                        "maxItems": 128
                       },
                       "starter_ledger": {
                         "type": "array",
@@ -5541,7 +6834,9 @@
                         "additionalProperties": false,
                         "properties": {
                           "solar_w": {
-                            "const": 100
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000
                           },
                           "capacity_mj": {
                             "const": 20000000
@@ -5639,6 +6934,9 @@
                               "type": "string",
                               "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
                             },
+                            "retired": {
+                              "type": "boolean"
+                            },
                             "position": {
                               "type": "object",
                               "additionalProperties": false,
@@ -5682,7 +6980,9 @@
                               "maximum": 8000000
                             },
                             "initial_mj": {
-                              "const": 8000000
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 8000000
                             },
                             "charged_mj": {
                               "type": "integer",
@@ -5760,7 +7060,7 @@
                             "cargo"
                           ]
                         },
-                        "maxItems": 2
+                        "maxItems": 8
                       },
                       "jobs": {
                         "type": "array",
@@ -6004,6 +7304,252 @@
                       "jobs",
                       "observations"
                     ]
+                  },
+                  "manufacturing": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "version": {
+                        "const": "manufacturing-v1"
+                      },
+                      "storage_used": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 128
+                      },
+                      "storage_slots": {
+                        "const": 16
+                      },
+                      "products": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "category": {
+                              "enum": ["part", "machine", "robot", "upgrade", "defense"]
+                            },
+                            "state": {
+                              "enum": [
+                                "available",
+                                "reserved",
+                                "installed",
+                                "destroyed",
+                                "consumed"
+                              ]
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "contents": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1000000
+                              }
+                            },
+                            "components": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "unit_mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                  }
+                                },
+                                "required": ["id", "kind", "quantity", "unit_mass_g"]
+                              },
+                              "maxItems": 128
+                            },
+                            "source_job_id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "mass_g": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "category",
+                            "state",
+                            "enabled",
+                            "contents",
+                            "components",
+                            "source_job_id",
+                            "mass_g"
+                          ]
+                        },
+                        "maxItems": 128
+                      },
+                      "jobs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "machine_id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "recipe": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "state": {
+                              "enum": [
+                                "waiting",
+                                "running",
+                                "paused",
+                                "completed",
+                                "cancelled",
+                                "failed"
+                              ]
+                            },
+                            "reason": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "duration_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20000
+                            },
+                            "work_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20000
+                            },
+                            "energy_mj": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 10000000
+                            },
+                            "material_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 10000
+                                  },
+                                  "material": {
+                                    "enum": [
+                                      "copper",
+                                      "steel",
+                                      "aluminum",
+                                      "hdpe",
+                                      "glass",
+                                      "rubber"
+                                    ]
+                                  }
+                                },
+                                "required": ["id", "mass_g", "material"]
+                              },
+                              "maxItems": 1
+                            },
+                            "product_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 16
+                            },
+                            "component_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "unit_mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                  }
+                                },
+                                "required": ["id", "kind", "quantity", "unit_mass_g"]
+                              },
+                              "maxItems": 32
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "machine_id",
+                            "recipe",
+                            "state",
+                            "reason",
+                            "duration_ms",
+                            "work_ms",
+                            "energy_mj",
+                            "material_inputs",
+                            "product_inputs",
+                            "component_inputs"
+                          ]
+                        },
+                        "maxItems": 64
+                      }
+                    },
+                    "required": ["version", "storage_used", "storage_slots", "products", "jobs"]
                   },
                   "legacy_recovery": {
                     "type": "boolean"
@@ -6341,7 +7887,7 @@
                           ],
                           "additionalProperties": false
                         },
-                        "maxItems": 10
+                        "maxItems": 128
                       },
                       "observations": {
                         "type": "array",
@@ -6769,6 +8315,9 @@
                           "enum": [
                             "strip-cable",
                             "recover-cable-residue",
+                            "form-steel",
+                            "form-aluminum",
+                            "mold-hdpe",
                             "inspect-batch",
                             "inspect-component",
                             "bench-recover-steel",
@@ -6788,7 +8337,7 @@
                         "pause_reason": {
                           "anyOf": [
                             {
-                              "enum": ["requested", "power"]
+                              "enum": ["requested", "power", "machine-disabled"]
                             },
                             {
                               "type": "null"
@@ -6891,6 +8440,7 @@
                       "CLASS_UNSUPPORTED",
                       "CARGO_FULL",
                       "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
                       "NOT_READY",
                       "INVARIANT_FAILED",
@@ -6918,6 +8468,185 @@
       "inputSchema": {
         "type": "object",
         "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "expected_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999999999
+              },
+              "action": {
+                "const": "enqueue_manufacturing"
+              },
+              "recipe_id": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "batch_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                },
+                "maxItems": 1
+              },
+              "product_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                },
+                "maxItems": 16
+              },
+              "component_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                },
+                "maxItems": 32
+              }
+            },
+            "required": [
+              "version",
+              "command_id",
+              "match_id",
+              "expected_revision",
+              "action",
+              "recipe_id",
+              "batch_ids",
+              "product_ids",
+              "component_ids"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "expected_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999999999
+              },
+              "action": {
+                "const": "salvage_starter_asset"
+              },
+              "asset_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              }
+            },
+            "required": [
+              "version",
+              "command_id",
+              "match_id",
+              "expected_revision",
+              "action",
+              "asset_id"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "expected_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999999999
+              },
+              "action": {
+                "const": "set_production_machine"
+              },
+              "machine_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "version",
+              "command_id",
+              "match_id",
+              "expected_revision",
+              "action",
+              "machine_id",
+              "enabled"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 5
+              },
+              "command_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "match_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "expected_revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999999999
+              },
+              "action": {
+                "const": "destroy_manufactured_product"
+              },
+              "product_id": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              }
+            },
+            "required": [
+              "version",
+              "command_id",
+              "match_id",
+              "expected_revision",
+              "action",
+              "product_id"
+            ]
+          },
           {
             "type": "object",
             "additionalProperties": false,
@@ -8040,7 +9769,7 @@
                           },
                           "required": ["kind", "quantity", "unit_mass_g"]
                         },
-                        "maxItems": 10
+                        "maxItems": 128
                       },
                       "starter_ledger": {
                         "type": "array",
@@ -8076,7 +9805,9 @@
                         "additionalProperties": false,
                         "properties": {
                           "solar_w": {
-                            "const": 100
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000
                           },
                           "capacity_mj": {
                             "const": 20000000
@@ -8174,6 +9905,9 @@
                               "type": "string",
                               "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
                             },
+                            "retired": {
+                              "type": "boolean"
+                            },
                             "position": {
                               "type": "object",
                               "additionalProperties": false,
@@ -8217,7 +9951,9 @@
                               "maximum": 8000000
                             },
                             "initial_mj": {
-                              "const": 8000000
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 8000000
                             },
                             "charged_mj": {
                               "type": "integer",
@@ -8295,7 +10031,7 @@
                             "cargo"
                           ]
                         },
-                        "maxItems": 2
+                        "maxItems": 8
                       },
                       "jobs": {
                         "type": "array",
@@ -8539,6 +10275,252 @@
                       "jobs",
                       "observations"
                     ]
+                  },
+                  "manufacturing": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "version": {
+                        "const": "manufacturing-v1"
+                      },
+                      "storage_used": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 128
+                      },
+                      "storage_slots": {
+                        "const": 16
+                      },
+                      "products": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "category": {
+                              "enum": ["part", "machine", "robot", "upgrade", "defense"]
+                            },
+                            "state": {
+                              "enum": [
+                                "available",
+                                "reserved",
+                                "installed",
+                                "destroyed",
+                                "consumed"
+                              ]
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "contents": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1000000
+                              }
+                            },
+                            "components": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "unit_mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                  }
+                                },
+                                "required": ["id", "kind", "quantity", "unit_mass_g"]
+                              },
+                              "maxItems": 128
+                            },
+                            "source_job_id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "mass_g": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "category",
+                            "state",
+                            "enabled",
+                            "contents",
+                            "components",
+                            "source_job_id",
+                            "mass_g"
+                          ]
+                        },
+                        "maxItems": 128
+                      },
+                      "jobs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "machine_id": {
+                              "type": "string",
+                              "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                            },
+                            "recipe": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "state": {
+                              "enum": [
+                                "waiting",
+                                "running",
+                                "paused",
+                                "completed",
+                                "cancelled",
+                                "failed"
+                              ]
+                            },
+                            "reason": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "duration_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20000
+                            },
+                            "work_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20000
+                            },
+                            "energy_mj": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 10000000
+                            },
+                            "material_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 10000
+                                  },
+                                  "material": {
+                                    "enum": [
+                                      "copper",
+                                      "steel",
+                                      "aluminum",
+                                      "hdpe",
+                                      "glass",
+                                      "rubber"
+                                    ]
+                                  }
+                                },
+                                "required": ["id", "mass_g", "material"]
+                              },
+                              "maxItems": 1
+                            },
+                            "product_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                              },
+                              "maxItems": 16
+                            },
+                            "component_inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                  },
+                                  "unit_mass_g": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                  }
+                                },
+                                "required": ["id", "kind", "quantity", "unit_mass_g"]
+                              },
+                              "maxItems": 32
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "machine_id",
+                            "recipe",
+                            "state",
+                            "reason",
+                            "duration_ms",
+                            "work_ms",
+                            "energy_mj",
+                            "material_inputs",
+                            "product_inputs",
+                            "component_inputs"
+                          ]
+                        },
+                        "maxItems": 64
+                      }
+                    },
+                    "required": ["version", "storage_used", "storage_slots", "products", "jobs"]
                   },
                   "legacy_recovery": {
                     "type": "boolean"
@@ -8876,7 +10858,7 @@
                           ],
                           "additionalProperties": false
                         },
-                        "maxItems": 10
+                        "maxItems": 128
                       },
                       "observations": {
                         "type": "array",
@@ -9304,6 +11286,9 @@
                           "enum": [
                             "strip-cable",
                             "recover-cable-residue",
+                            "form-steel",
+                            "form-aluminum",
+                            "mold-hdpe",
                             "inspect-batch",
                             "inspect-component",
                             "bench-recover-steel",
@@ -9323,7 +11308,7 @@
                         "pause_reason": {
                           "anyOf": [
                             {
-                              "enum": ["requested", "power"]
+                              "enum": ["requested", "power", "machine-disabled"]
                             },
                             {
                               "type": "null"
@@ -9441,6 +11426,7 @@
                       "CLASS_UNSUPPORTED",
                       "CARGO_FULL",
                       "INSPECTION_REQUIRED",
+                      "MANUFACTURING_REQUIREMENTS",
                       "INVALID_FEEDSTOCK",
                       "NOT_READY",
                       "INVARIANT_FAILED",
