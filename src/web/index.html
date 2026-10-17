@@ -46,6 +46,9 @@
         <section class="panel"><div class="panel-top"><h3>Your saved matches</h3><button type="button" id="refresh-list" class="secondary">Refresh list</button></div><div id="match-list"></div><button type="button" id="more-matches" class="secondary" disabled>More matches</button></section>
       </div>
       <section id="match-view" hidden>
+        <section id="match-result" class="panel" role="status" aria-live="polite" hidden>
+          <p class="eyebrow">FINAL MATCH RESULT</p><h2 id="result-heading">Final result</h2><p id="result-summary"></p><p id="result-record" class="note"></p>
+        </section>
         <div class="section-title"><div><p class="eyebrow" id="match-status"></p><h2 id="match-heading">Your recovery session</h2><p id="revision" class="note"></p></div><button type="button" id="refresh-match" class="secondary">Reconnect match</button></div>
         <p id="lifecycle-note"></p><p class="note">Match <span id="match-id"></span></p>
         <div id="invitation" class="panel" hidden><h3>Your invitation</h3><label for="invite-match">Share this match ID</label><input id="invite-match" readonly><label for="invite-code">Share this invitation code</label><input id="invite-code" readonly placeholder="Renew the invitation to get a new code"><p id="invite-expiry" class="note"></p><button type="button" id="rotate-invite" class="secondary" data-mutation="true">Renew invitation</button></div>
@@ -85,7 +88,7 @@
           <div id="production-result" role="status" aria-live="polite"></div>
           <h3>Production queue</h3><div id="production-jobs"></div>
           <h3>Defenses and raiding units</h3>
-          <p class="note">Manufacture a turret or raid launcher below, then deploy it to a free home-side cell. Load steel slugs while disabled. Begin combat to publish tactical positions for both crews; inventories and material evidence stay private. Victory resolution is still pending.</p>
+          <p class="note">Manufacture a turret or raid launcher below, then deploy it to a free home-side cell. Load steel slugs while disabled. Begin combat to publish tactical positions for both crews; inventories and material evidence stay private. Tower destruction ends the match; equal-time destruction is a tie.</p>
           <div class="science-fields"><div><label for="unit-x">Deployment X</label><input id="unit-x" type="number" min="1" max="94" step="1" value="38"></div><div><label for="unit-y">Deployment Y</label><input id="unit-y" type="number" min="1" max="54" step="1" value="24"></div></div>
           <button type="button" id="start-combat" data-mutation="true">Begin combat</button>
           <p id="combat-note" class="note"></p>

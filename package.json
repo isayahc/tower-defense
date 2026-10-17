@@ -20,7 +20,8 @@
     "start": "node --env-file-if-exists=.env dist/server/main.js",
     "test:browser": "node --import tsx scripts/browser-test.ts",
     "test:integration": "node --import tsx scripts/integration-test.ts",
-    "check:materials": "node scripts/sync-material-science.mjs"
+    "check:materials": "node scripts/sync-material-science.mjs",
+    "test:browser:results": "node --import tsx scripts/victory-browser-test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.0",

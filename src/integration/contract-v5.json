@@ -52,9 +52,11 @@
       "authoritative-combat",
       "industry-disruption",
       "outpost-capture",
-      "combat-retreat"
+      "combat-retreat",
+      "authoritative-victory",
+      "simultaneous-destruction-tie"
     ],
-    "unsupported": ["sensor-kit-manufacturing", "victory", "property-certification", "events"]
+    "unsupported": ["sensor-kit-manufacturing", "property-certification", "events"]
   },
   "tools": [
     {
@@ -2289,11 +2291,13 @@
                   "authoritative-combat",
                   "industry-disruption",
                   "outpost-capture",
-                  "combat-retreat"
+                  "combat-retreat",
+                  "authoritative-victory",
+                  "simultaneous-destruction-tie"
                 ]
               },
               "unsupported": {
-                "const": ["sensor-kit-manufacturing", "victory", "property-certification", "events"]
+                "const": ["sensor-kit-manufacturing", "property-certification", "events"]
               }
             },
             "required": [
@@ -2419,17 +2423,161 @@
                   "completion": {
                     "anyOf": [
                       {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                          "reason": {
-                            "enum": ["abandoned", "invite-expired", "recovery-complete"]
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "reason": {
+                                "enum": ["abandoned", "invite-expired", "recovery-complete"]
+                              },
+                              "winner_slot": {
+                                "type": "null"
+                              }
+                            },
+                            "required": ["reason", "winner_slot"]
                           },
-                          "winner_slot": {
-                            "type": "null"
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "result_version": {
+                                "const": "victory-v1"
+                              },
+                              "result_id": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}:victory-v1$"
+                              },
+                              "resolved_at_ms": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "tower_health": {
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 1
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 2
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  }
+                                ],
+                                "additionalItems": false
+                              },
+                              "reason": {
+                                "const": "tower-destroyed"
+                              },
+                              "winner_slot": {
+                                "enum": [1, 2]
+                              }
+                            },
+                            "required": [
+                              "result_version",
+                              "result_id",
+                              "resolved_at_ms",
+                              "tower_health",
+                              "reason",
+                              "winner_slot"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "result_version": {
+                                "const": "victory-v1"
+                              },
+                              "result_id": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}:victory-v1$"
+                              },
+                              "resolved_at_ms": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "tower_health": {
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 1
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 2
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  }
+                                ],
+                                "additionalItems": false
+                              },
+                              "reason": {
+                                "const": "simultaneous-tower-destruction"
+                              },
+                              "winner_slot": {
+                                "type": "null"
+                              }
+                            },
+                            "required": [
+                              "result_version",
+                              "result_id",
+                              "resolved_at_ms",
+                              "tower_health",
+                              "reason",
+                              "winner_slot"
+                            ]
                           }
-                        },
-                        "required": ["reason", "winner_slot"]
+                        ]
                       },
                       {
                         "type": "null"
@@ -4782,7 +4930,12 @@
                         "cancellation_reason": {
                           "anyOf": [
                             {
-                              "enum": ["requested", "machine_destroyed", "match_abandoned"]
+                              "enum": [
+                                "requested",
+                                "machine_destroyed",
+                                "match_abandoned",
+                                "match_completed"
+                              ]
                             },
                             {
                               "type": "null"
@@ -4967,17 +5120,161 @@
                   "completion": {
                     "anyOf": [
                       {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                          "reason": {
-                            "enum": ["abandoned", "invite-expired", "recovery-complete"]
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "reason": {
+                                "enum": ["abandoned", "invite-expired", "recovery-complete"]
+                              },
+                              "winner_slot": {
+                                "type": "null"
+                              }
+                            },
+                            "required": ["reason", "winner_slot"]
                           },
-                          "winner_slot": {
-                            "type": "null"
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "result_version": {
+                                "const": "victory-v1"
+                              },
+                              "result_id": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}:victory-v1$"
+                              },
+                              "resolved_at_ms": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "tower_health": {
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 1
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 2
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  }
+                                ],
+                                "additionalItems": false
+                              },
+                              "reason": {
+                                "const": "tower-destroyed"
+                              },
+                              "winner_slot": {
+                                "enum": [1, 2]
+                              }
+                            },
+                            "required": [
+                              "result_version",
+                              "result_id",
+                              "resolved_at_ms",
+                              "tower_health",
+                              "reason",
+                              "winner_slot"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "result_version": {
+                                "const": "victory-v1"
+                              },
+                              "result_id": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}:victory-v1$"
+                              },
+                              "resolved_at_ms": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "tower_health": {
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 1
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 2
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  }
+                                ],
+                                "additionalItems": false
+                              },
+                              "reason": {
+                                "const": "simultaneous-tower-destruction"
+                              },
+                              "winner_slot": {
+                                "type": "null"
+                              }
+                            },
+                            "required": [
+                              "result_version",
+                              "result_id",
+                              "resolved_at_ms",
+                              "tower_health",
+                              "reason",
+                              "winner_slot"
+                            ]
                           }
-                        },
-                        "required": ["reason", "winner_slot"]
+                        ]
                       },
                       {
                         "type": "null"
@@ -7330,7 +7627,12 @@
                         "cancellation_reason": {
                           "anyOf": [
                             {
-                              "enum": ["requested", "machine_destroyed", "match_abandoned"]
+                              "enum": [
+                                "requested",
+                                "machine_destroyed",
+                                "match_abandoned",
+                                "match_completed"
+                              ]
                             },
                             {
                               "type": "null"
@@ -7503,17 +7805,161 @@
                   "completion": {
                     "anyOf": [
                       {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                          "reason": {
-                            "enum": ["abandoned", "invite-expired", "recovery-complete"]
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "reason": {
+                                "enum": ["abandoned", "invite-expired", "recovery-complete"]
+                              },
+                              "winner_slot": {
+                                "type": "null"
+                              }
+                            },
+                            "required": ["reason", "winner_slot"]
                           },
-                          "winner_slot": {
-                            "type": "null"
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "result_version": {
+                                "const": "victory-v1"
+                              },
+                              "result_id": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}:victory-v1$"
+                              },
+                              "resolved_at_ms": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "tower_health": {
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 1
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 2
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  }
+                                ],
+                                "additionalItems": false
+                              },
+                              "reason": {
+                                "const": "tower-destroyed"
+                              },
+                              "winner_slot": {
+                                "enum": [1, 2]
+                              }
+                            },
+                            "required": [
+                              "result_version",
+                              "result_id",
+                              "resolved_at_ms",
+                              "tower_health",
+                              "reason",
+                              "winner_slot"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "result_version": {
+                                "const": "victory-v1"
+                              },
+                              "result_id": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}:victory-v1$"
+                              },
+                              "resolved_at_ms": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "tower_health": {
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 1
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 2
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  }
+                                ],
+                                "additionalItems": false
+                              },
+                              "reason": {
+                                "const": "simultaneous-tower-destruction"
+                              },
+                              "winner_slot": {
+                                "type": "null"
+                              }
+                            },
+                            "required": [
+                              "result_version",
+                              "result_id",
+                              "resolved_at_ms",
+                              "tower_health",
+                              "reason",
+                              "winner_slot"
+                            ]
                           }
-                        },
-                        "required": ["reason", "winner_slot"]
+                        ]
                       },
                       {
                         "type": "null"
@@ -9866,7 +10312,12 @@
                         "cancellation_reason": {
                           "anyOf": [
                             {
-                              "enum": ["requested", "machine_destroyed", "match_abandoned"]
+                              "enum": [
+                                "requested",
+                                "machine_destroyed",
+                                "match_abandoned",
+                                "match_completed"
+                              ]
                             },
                             {
                               "type": "null"
@@ -11217,17 +11668,161 @@
                   "completion": {
                     "anyOf": [
                       {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                          "reason": {
-                            "enum": ["abandoned", "invite-expired", "recovery-complete"]
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "reason": {
+                                "enum": ["abandoned", "invite-expired", "recovery-complete"]
+                              },
+                              "winner_slot": {
+                                "type": "null"
+                              }
+                            },
+                            "required": ["reason", "winner_slot"]
                           },
-                          "winner_slot": {
-                            "type": "null"
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "result_version": {
+                                "const": "victory-v1"
+                              },
+                              "result_id": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}:victory-v1$"
+                              },
+                              "resolved_at_ms": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "tower_health": {
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 1
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 2
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  }
+                                ],
+                                "additionalItems": false
+                              },
+                              "reason": {
+                                "const": "tower-destroyed"
+                              },
+                              "winner_slot": {
+                                "enum": [1, 2]
+                              }
+                            },
+                            "required": [
+                              "result_version",
+                              "result_id",
+                              "resolved_at_ms",
+                              "tower_health",
+                              "reason",
+                              "winner_slot"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "result_version": {
+                                "const": "victory-v1"
+                              },
+                              "result_id": {
+                                "type": "string",
+                                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}:victory-v1$"
+                              },
+                              "resolved_at_ms": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "tower_health": {
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2,
+                                "items": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 1
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "slot": {
+                                        "const": 2
+                                      },
+                                      "health": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 300
+                                      }
+                                    },
+                                    "required": ["slot", "health"]
+                                  }
+                                ],
+                                "additionalItems": false
+                              },
+                              "reason": {
+                                "const": "simultaneous-tower-destruction"
+                              },
+                              "winner_slot": {
+                                "type": "null"
+                              }
+                            },
+                            "required": [
+                              "result_version",
+                              "result_id",
+                              "resolved_at_ms",
+                              "tower_health",
+                              "reason",
+                              "winner_slot"
+                            ]
                           }
-                        },
-                        "required": ["reason", "winner_slot"]
+                        ]
                       },
                       {
                         "type": "null"
@@ -13580,7 +14175,12 @@
                         "cancellation_reason": {
                           "anyOf": [
                             {
-                              "enum": ["requested", "machine_destroyed", "match_abandoned"]
+                              "enum": [
+                                "requested",
+                                "machine_destroyed",
+                                "match_abandoned",
+                                "match_completed"
+                              ]
                             },
                             {
                               "type": "null"

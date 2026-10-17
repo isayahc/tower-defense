@@ -21,7 +21,7 @@ export function assessGameReadiness(
     canStartRecovery: processingContractVerified,
     code: processingContractVerified ? "FULL_GAME_UNSUPPORTED" : "GAME_CONTRACT_UNVERIFIED",
     message: processingContractVerified
-      ? "The shared dump supports recovery, manufacturing and combat. Victory resolution is still in development."
+      ? "The shared dump supports recovery, manufacturing, combat and persistent match results. Full-match startup verification remains pending."
       : "OpenIndustries has no verified compatible game contract. Match startup is disabled.",
     requiredCapabilities: [...GAME_REQUIREMENTS],
   };

@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Mapped-Assembly/Open-Industries
-          ref: dfd6ef553e2caea1d3461aa44a7a7a9cc3ba7e32
+          ref: 5723dac839302e892196d97ed76b0bc6d6a00e65
           path: .integration/open-industries
       - uses: actions/setup-node@v4
         with:
@@ -39,6 +39,9 @@ jobs:
       - name: Install Chromium
         if: runner.os == 'Linux'
         run: npx playwright install --with-deps chromium
+      - name: Verify victory, defeat and tie on desktop/mobile
+        if: runner.os == 'Linux'
+        run: npm run test:browser:results
       - name: Verify desktop and mobile browsers
         if: runner.os == 'Linux'
         run: npm run test:browser -- --combat

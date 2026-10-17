@@ -5,7 +5,10 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 /** Start a real private SQLite service; restart preserves the same database and port. */
-export async function launchRuntime(checkout: string) {
+export async function launchRuntime(
+  checkout: string,
+  options: { prepare?: (database: string) => Promise<void> } = {},
+) {
   const directory = await mkdtemp(join(tmpdir(), "tower-sqlite-"));
   let child: ChildProcessWithoutNullStreams;
   let origin = "";
@@ -60,6 +63,7 @@ export async function launchRuntime(checkout: string) {
     await rm(directory, { recursive: true, force: true });
   }
   try {
+    await options.prepare?.(join(directory, "runtime.sqlite"));
     await start();
     return {
       origin,
