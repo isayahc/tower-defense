@@ -475,6 +475,14 @@ async function constructTurret(page: Page, rival: Page) {
   assert.equal(await page.locator('circle[data-unit-id="' + unitId + '"]').count(), 1);
   if (process.argv.includes("--combat")) {
     await press(page, "Begin combat");
+    const rejected = page.waitForResponse(
+      (r) =>
+        r.url().endsWith("/api/runtime") && r.request().postDataJSON()?.args.order === "target",
+    );
+    await page.getByRole("button", { name: "Hold and target with " + suffix, exact: true }).click();
+    assert.equal((await rejected).status(), 400);
+    await wait(page, "game-state", "LIVE");
+    assert((await page.locator("#game-message").textContent())?.includes("range"));
     await press(page, "Defend with " + suffix);
     await rival.getByLabel("Select a waste site").selectOption({ label: "Crew 1 · cable" });
     await press(rival, "Survey with camera-depth · robot 1");
@@ -539,7 +547,12 @@ try {
             response.status() === 409 &&
             body?.error?.code === "CONFLICT" &&
             input?.name === "astra.game_command";
-          if (!knownConflict)
+          const knownRangeRejection =
+            path === "/api/runtime" &&
+            response.status() === 400 &&
+            body?.error?.code === "COMBAT_RANGE" &&
+            input?.args?.order === "target";
+          if (!knownConflict && !knownRangeRejection)
             unexpectedResponses.push(
               JSON.stringify({ path, status: response.status(), input, body }),
             );

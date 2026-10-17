@@ -151,6 +151,13 @@ export function createGame(request) {
     } catch (error) {
       if (
         [
+          "COMBAT_NOT_STARTED",
+          "INVALID_TARGET",
+          "COMBAT_RANGE",
+          "COMBAT_SERVICE",
+          "UNIT_POWER",
+          "UNIT_SITE",
+          "MANUFACTURING_REQUIREMENTS",
           "ROBOT_REQUIRED",
           "LEGACY_DEPOSIT",
           "ROBOT_BUSY",
