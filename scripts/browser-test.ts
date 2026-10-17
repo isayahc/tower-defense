@@ -747,6 +747,10 @@ try {
   await press(a, "Interrupt · robot 1");
   await press(a, "Retreat and unload · robot 1");
   if (process.argv.includes("--combat")) {
+    a.on("dialog", async (dialog) => {
+      assert.equal(dialog.type(), "confirm");
+      await dialog.accept();
+    });
     await press(a, "End session for both crews");
     await wait(a, "match-status", "COMPLETED");
     await wait(b, "match-status", "COMPLETED");
