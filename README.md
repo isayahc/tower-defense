@@ -4,7 +4,7 @@ A planned two-player strategy game where rival robot crews turn a city's discard
 
 **Status: full two-player matches are enabled, from authenticated create/join through recovery, manufacturing, combat and persistent victory/defeat/tie results.** The backend verifies the 28-tool Open-Industries v5 server and exposes ten reviewed game tools. Players can survey, haul, inspect, process, manufacture turrets/launchers, then issue defend, attack, target, capture and retreat orders. The server owns movement, ammunition, damage and persistent salvage. The stack uses SQLite and native game accounts. See [web setup](docs/web-foundation.md) and [discovery evidence](docs/discovery/README.md).
 
-This README is the product specification. [The science-engine design](docs/material-science.md) defines the intended full engine; [the integration contract](docs/openindustries-contract.md) defines the authoritative boundary still required for playable matches.
+This README is the product specification. [The science-engine design](docs/material-science.md) defines the intended full engine; [the integration contract](docs/openindustries-contract.md) defines the authoritative boundary for playable matches.
 
 ## The Setting
 

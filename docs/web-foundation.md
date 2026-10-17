@@ -4,7 +4,7 @@ A small TypeScript/Node HTTP backend serves static HTML/CSS/JavaScript. It uses 
 
 ## Setup
 
-Install Node 22.18+ and both repositories with `npm ci`. Use the Open-Industries combat-v1 commit pinned in `.github/workflows/ci.yml` with this matching client (SQLite schema 10). In Open-Industries, create `.env` with `ASTRA_GAME_ALLOW_SIGNUP=true` and run `npm run game:server`. This creates its private SQLite file and starts autonomous ticks on loopback port 8790.
+Install Node 22.18+ and both repositories with `npm ci`. Use the Open-Industries full-match commit pinned in `.github/workflows/ci.yml` with this matching client (SQLite schema 10). In Open-Industries, create `.env` with `ASTRA_GAME_ALLOW_SIGNUP=true` and run `npm run game:server`. This creates its private SQLite file and starts autonomous ticks on loopback port 8790.
 
 In tower-defense, copy `.env.example` to `.env`, set `OI_CHECKOUT` to that installed checkout, and run `npm run dev`. Open **http://127.0.0.1:3000**. Windows PowerShell accepts forward slashes in the checkout path, for example `C:/projects/Open-Industries`.
 
@@ -18,11 +18,11 @@ Both services bind loopback. For remote browsers, put the game backend behind a 
 
 | Route | Purpose |
 | --- | --- |
-| `GET /api/integration` | Cached read-only discovery and service health; always reports `canStartMatch: false` |
+| `GET /api/integration` | Cached read-only discovery and live service health; enables `canStartMatch` only for the exact compatible full-game contract and healthy worker |
 | `POST /api/session` | Exact `{mode: "login" or "register", username, password}`; returns only authentication status |
 | `GET /api/session` | Revalidate the game session server-side |
 | `DELETE /api/session` | Revoke the upstream session, close its MCP process and clear the cookie |
-| `POST /api/runtime` | Exact `{name, args}` for the eight versioned recovery/science tools; authenticated and schema-checked |
+| `POST /api/runtime` | Exact `{name, args}` for the ten reviewed versioned game tools; authenticated and schema-checked |
 | `POST /api/matches` | Starts one authenticated match after exact contract and live scheduler verification; body: `{version:5, command_id:UUID}` |
 
 The browser receives a random opaque HttpOnly, SameSite=Strict cookie; it never receives the runtime token, a player-ID selector or server filesystem paths. HTTPS uses a Secure `__Host-` cookie. Backend sessions last at most eight hours, are bounded to 32, and each owns one lazily started MCP process. SQLite verifies the token/owner on every game operation. A browser-supplied identity, arbitrary tool name or unknown field is rejected before forwarding.
@@ -109,3 +109,5 @@ The result stops remaining jobs and combat through the existing accounting paths
 Sign in, select **Start full match** or **Create match**, and share the invitation with a second account. Join with **Join match**. Recover and inspect material, manufacture parts and supplied units, then select **Begin combat**. An attack order advances a launcher into range of the selected opposing tower; six 50-health shots destroy a 300-health tower. Reload the two-slug launcher between volleys. The match phase displays waiting, active, paused, reconnecting and final outcome; incompatible services display an integration error and disable startup.
 
 `POST /api/matches` accepts only `{ "version": 5, "command_id": "<UUID>" }`. Preserve that body for uncertain retries. The same command returns its original receipt, including its original invitation. New startup checks the live worker and exact advertised contract even when discovery is cached. Accounts, host/origin checks, CSRF protection, quotas and server-owned state also apply to this route.
+
+After a transient rejected read or restart, the page retries authorized reads even if its first membership request failed before any snapshot loaded. These reads can restore the view; uncertain mutations retain their original command and still require explicit retry.
