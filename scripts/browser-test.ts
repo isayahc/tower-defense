@@ -54,6 +54,7 @@ async function press(page: Page, name: string) {
         "astra.game_manufacturing_catalog",
       ].includes(operation);
     });
+    void pending.catch(() => {});
     await page
       .getByRole("button", { name, exact: true })
       .and(page.locator(":enabled"))

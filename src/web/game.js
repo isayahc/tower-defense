@@ -1248,9 +1248,14 @@ export function createGame(request) {
     renderProduction();
     renderRobots();
     const assets = el("assets");
+    const expanded = new Set(
+      [...assets.querySelectorAll("details[open]")].map((d) => d.dataset.assetId),
+    );
     assets.replaceChildren();
     for (const a of s.base.assets) {
       const details = node("details");
+      details.dataset.assetId = a.id;
+      details.open = expanded.has(a.id);
       details.append(node("summary", `${a.label} · ${a.status}`));
       const ul = node("ul");
       for (const c of a.components)
