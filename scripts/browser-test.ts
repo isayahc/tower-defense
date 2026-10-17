@@ -4,6 +4,7 @@ import { chromium, type Page } from "playwright";
 import { startApp } from "../src/server/app.js";
 import { launchRuntime } from "../tests/helpers/runtime.js";
 
+const fullMatch = process.argv.includes("--full");
 const checkout = process.env.OI_CHECKOUT;
 if (!checkout) throw new Error("Set OI_CHECKOUT to the documented SQLite runtime checkout.");
 const browser = await chromium.launch({
@@ -27,7 +28,7 @@ async function wait(page: Page, id: string, text: string) {
 }
 async function signIn(page: Page, username: string, register: boolean) {
   await page.goto(app.origin);
-  await wait(page, "badge", "RECOVERY READY");
+  await wait(page, "badge", "MATCH READY");
   await page.getByLabel("Username", { exact: true }).fill(username);
   await page.getByLabel("Password", { exact: false }).fill(password);
   if (register) await page.getByLabel("Create a new account").check();
@@ -36,7 +37,7 @@ async function signIn(page: Page, username: string, register: boolean) {
     .click();
   await wait(page, "account-badge", "SIGNED IN");
   await wait(page, "game-state", "LIVE");
-  assert(await page.getByRole("button", { name: "Start full match" }).isDisabled());
+  assert(await page.getByRole("button", { name: "Start full match" }).isEnabled());
   assert.equal(await page.evaluate(() => document.cookie), "");
   assert.equal(await page.evaluate(() => localStorage.length + sessionStorage.length), 0);
   assert((await page.context().cookies()).every((c) => c.httpOnly && c.sameSite === "Strict"));
@@ -45,6 +46,7 @@ async function press(page: Page, name: string) {
   for (let attempt = 0; attempt < 3; attempt++) {
     await wait(page, "game-state", "LIVE");
     const pending = page.waitForResponse((response) => {
+      if (response.url().endsWith("/api/matches")) return true;
       if (!response.url().endsWith("/api/runtime")) return false;
       const operation = response.request().postDataJSON()?.name;
       return ![
@@ -376,7 +378,10 @@ async function assemble(
       options.map((o) => ({ id: (o as HTMLOptionElement).value, label: o.textContent ?? "" })),
     );
   const componentIds = hardware.flatMap((kind) => {
-    let remaining = kind === "fastener" ? 2 : 1;
+    let remaining =
+      kind === "fastener" || (recipe === "raid-launcher" && ["motor", "wheel"].includes(kind))
+        ? 2
+        : 1;
     const ids: string[] = [];
     for (const c of components.filter((o) => o.label.includes(" × " + kind + " ·"))) {
       if (remaining <= 0) break;
@@ -420,7 +425,13 @@ async function constructTurret(page: Page, rival: Page) {
     await page.locator("#assets details").filter({ hasText: label }).locator("summary").click();
     await press(page, "Dismantle " + label + " for components");
   }
-  for (const kind of ["drive", "controller", "motor", "camera"]) {
+  for (const kind of [
+    "drive",
+    "controller",
+    "motor",
+    "camera",
+    ...(fullMatch ? ["wheel", "robot-battery"] : []),
+  ]) {
     while (
       await page
         .getByRole("button", { name: "Test " + kind + " · 3 s / 300 J", exact: true })
@@ -445,6 +456,33 @@ async function constructTurret(page: Page, rival: Page) {
     "controller",
     "fastener",
   ]);
+  if (fullMatch) {
+    await recoverFamily(page, 1, "construction", "bench-recover-steel", "steel-bracket");
+    await recoverFamily(page, 1, "tire", "bench-cut-tire", "traction-tread");
+    await manufacturePart(page, "steel-chassis", "game-steel-v1", 8);
+    await manufacturePart(page, "copper-conductor", "game-copper-v1", 0.1);
+    await manufacturePart(page, "hdpe-housing", "game-hdpe-v1", 0.2);
+    for (let i = 0; i < 2; i++)
+      await manufacturePart(page, "traction-tread", "game-rubber-v1", 0.5);
+    await assemble(
+      page,
+      "raid-launcher",
+      { "steel-chassis": 1, "copper-conductor": 1, "hdpe-housing": 1, "traction-tread": 2 },
+      ["motor", "wheel", "controller", "robot-battery", "fastener"],
+    );
+    for (let i = 0; i < 6; i++) await manufacturePart(page, "steel-slug", "game-steel-v1", 0.25);
+    const unit = page.locator("#units-list .job").filter({ hasText: "raid-launcher" });
+    const unitId = await unit.getAttribute("data-unit-id");
+    assert(unitId);
+    const suffix = `raid-launcher ${unitId.slice(0, 8)}`;
+    await page.getByLabel("Deployment X", { exact: true }).fill("47");
+    await page.getByLabel("Deployment Y", { exact: true }).fill("24");
+    await press(page, `Deploy ${suffix} (1000 J)`);
+    await press(page, `Load steel slug into ${suffix}`);
+    await press(page, `Load steel slug into ${suffix}`);
+    await press(page, `Enable ${suffix}`);
+    return suffix;
+  }
   for (let i = 0; i < 2; i++) await manufacturePart(page, "steel-bracket", "game-steel-v1", 1);
   await manufacturePart(page, "copper-conductor", "game-copper-v1", 0.1);
   await manufacturePart(page, "hdpe-housing", "game-hdpe-v1", 0.2);
@@ -566,7 +604,7 @@ try {
   assert(await a.getByRole("button", { name: "Sign in", exact: true }).isDisabled());
   await signIn(a, "alice", true);
   await signIn(b, "bob", true);
-  await press(a, "Create recovery session");
+  await press(a, fullMatch ? "Start full match" : "Create match");
   await wait(a, "match-status", "WAITING");
   const id = await a.getByLabel("Share this match ID").inputValue();
   const oldCode = await a.getByLabel("Share this invitation code").inputValue();
@@ -581,7 +619,7 @@ try {
   await b.getByText("Have an invitation?", { exact: true }).click();
   await b.getByLabel("Match ID", { exact: true }).fill(id);
   await b.getByLabel("Invitation code", { exact: true }).fill(code);
-  await press(b, "Join recovery session");
+  await press(b, "Join match");
   await wait(a, "match-status", "ACTIVE");
   await wait(b, "match-status", "ACTIVE");
   assert.equal(await a.locator("#dump-map .deposit").count(), 14);
@@ -730,7 +768,7 @@ try {
   // Keep these approval/click flows sequential so neither test races a stale approval.
   await recoverFamily(a, 1, "construction", "bench-recover-steel", "steel-bracket");
   await constructPress(a);
-  await constructTurret(a, b);
+  const launcher = await constructTurret(a, b);
   await recoverFamily(b, 2, "vehicle", "isolate-vehicle", "aluminum-housing");
   await manufacturePart(b, "copper-conductor", "game-copper-v1", 0.1);
   await b
@@ -747,7 +785,65 @@ try {
   await press(a, "Survey with camera-depth · robot 1");
   await press(a, "Interrupt · robot 1");
   await press(a, "Retreat and unload · robot 1");
-  if (process.argv.includes("--combat")) {
+  if (fullMatch) {
+    assert(launcher);
+    await press(a, "Begin combat");
+    const tower = await a
+      .locator("#combat-target option")
+      .filter({ hasText: "Crew 2 · tower" })
+      .getAttribute("value");
+    assert(tower);
+    await a.getByLabel("Combat target", { exact: true }).selectOption(tower);
+    // Every shot uses a real manufactured slug.
+    for (let wave = 0; wave < 3; wave++) {
+      if (wave > 0) {
+        await press(a, `Disable ${launcher}`);
+        await press(a, `Load steel slug into ${launcher}`);
+        await press(a, `Load steel slug into ${launcher}`);
+        await press(a, `Enable ${launcher}`);
+      }
+      await a.getByLabel("Combat target", { exact: true }).selectOption(tower);
+      await press(a, `Attack target with ${launcher}`);
+      if (wave < 2)
+        await a.waitForFunction(
+          () => document.getElementById("units-list")?.textContent?.includes("0 / 2 steel slugs"),
+          undefined,
+          { timeout: 90000 },
+        );
+      if (wave === 0) {
+        await runtime.restart();
+        await a.reload();
+        await b.reload();
+        await wait(a, "match-status", "ACTIVE");
+        await wait(b, "match-status", "ACTIVE");
+        await wait(a, "game-state", "LIVE");
+      }
+    }
+    await wait(a, "result-heading", "Victory");
+    await wait(b, "result-heading", "Defeat");
+    const finalRecord = await a.locator("#result-record").textContent();
+    assert.equal(await b.locator("#result-record").textContent(), finalRecord);
+    await runtime.restart();
+    for (const page of [a, b]) {
+      await page.reload();
+      await wait(page, "game-state", "LIVE");
+      assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      assert(
+        await page
+          .locator("#match-view [data-mutation]")
+          .evaluateAll((nodes) => nodes.every((n) => (n as HTMLButtonElement).disabled)),
+      );
+    }
+    await wait(a, "result-heading", "Victory");
+    await wait(b, "result-heading", "Defeat");
+    assert.equal(await a.locator("#result-record").textContent(), finalRecord);
+    assert.equal(await b.locator("#result-record").textContent(), finalRecord);
+    await a.locator("#match-result").screenshot({ path: "test-results/full-match-victory.png" });
+    await b.locator("#match-result").screenshot({ path: "test-results/full-match-defeat.png" });
+    console.log(
+      "PASS full two-browser match: authenticated startup, invite/join, real recovery, tested components, manufactured launcher and six slugs, server-owned tower destruction, desktop victory/mobile defeat and hard restart/reconnect",
+    );
+  } else if (process.argv.includes("--combat")) {
     a.on("dialog", async (dialog) => {
       assert.equal(dialog.type(), "confirm");
       await dialog.accept();
@@ -784,9 +880,10 @@ try {
   await Promise.all(responseChecks);
   assert.deepEqual(unexpectedResponses, []);
   assert.deepEqual(errors, []);
-  console.log(
-    "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, steel recovery, vehicle isolation and aluminum use, desktop press/turret construction, metered deployment and ammo, mobile unit reconnect/disable/salvage and mobile component manufacture, private evidence, reconnect, completion, screenshots and no console errors",
-  );
+  if (!fullMatch)
+    console.log(
+      "PASS desktop/mobile click-through: create, refresh/renew invite, join, private selection, uncertain-response identical retry, both recovery loops, paid inspections, component tests, authoritative suitability and temperature refusal, residue reprocessing, steel recovery, vehicle isolation and aluminum use, desktop press/turret construction, metered deployment and ammo, mobile unit reconnect/disable/salvage and mobile component manufacture, private evidence, reconnect, completion, screenshots and no console errors",
+    );
 } catch (error) {
   for (const [i, context] of browser.contexts().entries())
     for (const page of context.pages()) {

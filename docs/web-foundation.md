@@ -23,7 +23,7 @@ Both services bind loopback. For remote browsers, put the game backend behind a 
 | `GET /api/session` | Revalidate the game session server-side |
 | `DELETE /api/session` | Revoke the upstream session, close its MCP process and clear the cookie |
 | `POST /api/runtime` | Exact `{name, args}` for the eight versioned recovery/science tools; authenticated and schema-checked |
-| `POST /api/matches` | Explicitly rejects full-match startup until the complete game contract exists |
+| `POST /api/matches` | Starts one authenticated match after exact contract and live scheduler verification; body: `{version:5, command_id:UUID}` |
 
 The browser receives a random opaque HttpOnly, SameSite=Strict cookie; it never receives the runtime token, a player-ID selector or server filesystem paths. HTTPS uses a Secure `__Host-` cookie. Backend sessions last at most eight hours, are bounded to 32, and each owns one lazily started MCP process. SQLite verifies the token/owner on every game operation. A browser-supplied identity, arbitrary tool name or unknown field is rejected before forwarding.
 
@@ -33,7 +33,7 @@ POST/DELETE requests require exact Origin and Host matches and JSON bodies. Cros
 
 Use server-issued object IDs and revisions. Keep the same `command_id` and identical payload when a response is lost; the adapter never blindly retries a mutation or chooses a replacement ID. An uncertain result returns `OUTCOME_UNKNOWN`. After a conflict, read the current snapshot and reconcile before creating a new command. Each read is a full authorized replacement snapshot. Receipts can contain old snapshots, so read again after replay.
 
-Processing endpoints support only the declared foundation. The static describe response does not prove scheduler health, successful authentication or deployment readiness; health and identity are separately checked. Full-game startup stays disabled on both client and backend.
+Processing endpoints support only the declared foundation. The static describe response does not prove scheduler health, successful authentication or deployment readiness; health and identity are separately checked. Full-game startup requires both the verified contract and live scheduler health.
 
 ## Check
 
@@ -63,7 +63,7 @@ The v5 runtime now requires SQLite schema 7. The schema-5 envelope migration pre
 
 Polling every two seconds replaces the current snapshot. A failed connection marks the view stale and disables mutations; **Reconnect match** refreshes it. A mutation with an uncertain outcome retains its exact command in memory and exposes **Retry pending command**; it blocks new work until resolved. Conflict responses refresh state and require an explicit new action. Reloading drops pending in-memory commands: inspect the restored membership/inventory/job state before issuing new work.
 
-The earlier v4 service migrates v3 SQLite matches once, preserving material, jobs, energy and immutable receipts while adding pinned science versions and component references. Historical cable assays remain valid for separation; old recovered outputs receive no retroactive property measurements. Earlier v2 matches first receive the existing world migration. Back up first and upgrade both repositories together. Full-game startup remains disabled; manufacturing and combat now use additive reviewed extensions; the full create/join-to-victory browser flow remains #17.
+The earlier v4 service migrates v3 SQLite matches once, preserving material, jobs, energy and immutable receipts while adding pinned science versions and component references. Historical cable assays remain valid for separation; old recovered outputs receive no retroactive property measurements. Earlier v2 matches first receive the existing world migration. Back up first and upgrade both repositories together. Full-game startup requires the matching full-match contract and a healthy live service. The server health response includes its exact game contract; older services fail closed.
 
 ## Construct machines and manufacture parts
 
@@ -80,7 +80,7 @@ Manufacturing and combat require the pinned SQLite schema-10 runtime and matchin
 
 The construction catalog now includes HDPE/aluminum turret variants, raid launchers and 250 g steel-slug ammunition. The owner-only platform panel and map show deployment position, health, range/target eligibility, cooldown, magazine, shot/commissioning energy and blocked reasons. Deploy to a free reachable home-side cell, load while disabled, then enable. Damaged disabled platforms accept a steel bracket plus 500 J for up to 40 health. Salvage costs 300 J and returns ungraded constituent lots, untested original hardware and remaining attached products exactly once. All controls use the existing immutable command retry path; no client supplies unit stats, damage or material grants.
 
-Open-Industries SQLite schema 10 and the exact matching wire-v5 extension are required. Before combat starts, supplied equipment stays idle. After **Begin combat**, the server resolves orders and tower damage; victory, defeat and tie results are authoritative; the complete match browser flow remains #17. See the engine's `docs/game-units.md` for bills of materials, limits and accounting policy.
+Open-Industries SQLite schema 10 and the exact matching wire-v5 extension are required. Before combat starts, supplied equipment stays idle. After **Begin combat**, the server resolves orders and tower damage; victory, defeat and tie results are authoritative; the complete match browser flow is exercised by `npm run test:browser:full`. See the engine's `docs/game-units.md` for bills of materials, limits and accounting policy.
 
 
 ## Combat demo
@@ -93,7 +93,7 @@ Combat moves at one cell per second for 30 J/cell; shots consume the profile's e
 
 For a short demo, prepare inspected stock and tested hardware through actual recovery commands before inviting the audience. Demonstrate recovery/production, a turret damaging the other crew's moving robot, a launcher advancing toward a tower, then reconnect and retreat/salvage. Tower destruction ends the match. One destroyed tower awards the other crew the win; both destroyed in the same pulse is a tie. The browser never computes damage or awards stock. See [engine combat policy](https://github.com/Mapped-Assembly/Open-Industries/blob/main/docs/game-combat.md).
 
-Verification: `npm run check`, `OI_CHECKOUT=<absolute-engine-path> npm run test:integration`, and `OI_CHECKOUT=<absolute-engine-path> npm run test:browser -- --combat`. The browser scenario uses manufactured stock and two signed-in sessions on desktop/mobile; the engine's `npm run test:combat` additionally covers tower damage, restart, capture, retreat, timed salvage and competing SQLite connections.
+Verification: `npm run check`, `OI_CHECKOUT=<absolute-engine-path> npm run test:integration`, and `OI_CHECKOUT=<absolute-engine-path> npm run test:browser:full`. The browser scenario uses manufactured stock and two signed-in sessions on desktop/mobile; the engine's `npm run test:combat` additionally covers tower damage, restart, capture, retreat, timed salvage and competing SQLite connections.
 
 
 ## Final results
@@ -102,4 +102,10 @@ Open-Industries evaluates tower health after all shots in the same server tick. 
 
 The result stops remaining jobs and combat through the existing accounting paths. Paid energy remains spent, uncollected reservations are released and existing stock/cargo remains counted. New match mutations are disabled in the UI and rejected by the runtime. An exact retry of an earlier command still returns its original immutable receipt; reconnect reads the current result. Refreshing either browser or restarting the runtime preserves the result.
 
-`npm run test:browser:results` verifies all three outcomes on desktop and mobile using curated near-final-blow SQLite fixtures and actual server shots/MCP/HTTP. These fixtures are isolated result coverage, not evidence of the manufacturing chain. The engine's `npm run test:victory` separately starts from real recovered stock and manufactures the launcher and ammunition through tower destruction. Full create/join-to-victory browser verification remains #17, so full-match startup stays disabled.
+`npm run test:browser:results` verifies all three outcomes on desktop and mobile using curated near-final-blow SQLite fixtures and actual server shots/MCP/HTTP. These fixtures are isolated result coverage, not evidence of the manufacturing chain. The engine's `npm run test:victory` separately starts from real recovered stock and manufactures the launcher and ammunition through tower destruction. `npm run test:browser:full` separately uses two isolated desktop/mobile accounts to create/join, recover real scrap, test original hardware, manufacture a launcher and six slugs, destroy the opposing tower, and reconnect after hard restart during combat and after completion. It never seeds stock, moves the clock or writes the database.
+
+## Full-match startup
+
+Sign in, select **Start full match** or **Create match**, and share the invitation with a second account. Join with **Join match**. Recover and inspect material, manufacture parts and supplied units, then select **Begin combat**. An attack order advances a launcher into range of the selected opposing tower; six 50-health shots destroy a 300-health tower. Reload the two-slug launcher between volleys. The match phase displays waiting, active, paused, reconnecting and final outcome; incompatible services display an integration error and disable startup.
+
+`POST /api/matches` accepts only `{ "version": 5, "command_id": "<UUID>" }`. Preserve that body for uncertain retries. The same command returns its original receipt, including its original invitation. New startup checks the live worker and exact advertised contract even when discovery is cached. Accounts, host/origin checks, CSRF protection, quotas and server-owned state also apply to this route.

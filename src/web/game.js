@@ -45,9 +45,13 @@ export function createGame(request) {
   });
   window.addEventListener("keyup", releaseInteraction);
   const api = (name, args) =>
-    request("/api/runtime", {
+    request(name === "create_match" ? "/api/matches" : "/api/runtime", {
       method: "POST",
-      body: JSON.stringify({ name: `astra.game_${name}`, args: { version: 5, ...args } }),
+      body: JSON.stringify(
+        name === "create_match"
+          ? { version: 5, ...args }
+          : { name: `astra.game_${name}`, args: { version: 5, ...args } },
+      ),
     });
   const say = (text) => {
     el("game-message").textContent = text;
@@ -59,6 +63,7 @@ export function createGame(request) {
         !usable ||
         n.dataset.allowed === "false" ||
         (!!n.closest("#match-view") && snapshot?.status === "completed");
+    el("start-match").disabled = !usable;
     el("retry-command").hidden = !pending;
     el("retry-command").disabled = !access || busy;
     el("refresh-match").disabled = !access || busy;
@@ -71,6 +76,23 @@ export function createGame(request) {
         : busy
           ? "SYNCING"
           : "LIVE";
+    el("match-phase").textContent = stale
+      ? "Reconnecting"
+      : !snapshot
+        ? "Waiting"
+        : snapshot.completion?.result_version
+          ? snapshot.completion.winner_slot === null
+            ? "Tie"
+            : snapshot.completion.winner_slot === snapshot.players.find((p) => p.you)?.slot
+              ? "Victory"
+              : "Defeat"
+          : snapshot.status === "waiting"
+            ? "Waiting"
+            : snapshot.status === "completed"
+              ? "Completed"
+              : snapshot.jobs.some((j) => j.state === "paused")
+                ? "Paused"
+                : "Active";
     el("game-state").className = `badge ${stale ? "" : "ready"}`;
   }
   async function work(fn, background = false) {
@@ -248,7 +270,7 @@ export function createGame(request) {
     container.replaceChildren();
     if (!listed.length)
       container.append(
-        node("p", "No matches yet. Create a recovery session or join your partner.", "note"),
+        node("p", "No matches yet. Start a full match or join your partner.", "note"),
       );
     for (const match of listed) {
       const row = node("div", undefined, "match-row");
@@ -1380,6 +1402,7 @@ export function createGame(request) {
       recipe_id: chosen.design_id,
     });
   });
+  el("start-match").addEventListener("click", () => mutate("create_match", {}));
   el("create-recovery").addEventListener("click", () => mutate("create_match", {}));
   el("join-form").addEventListener("submit", (e) => {
     e.preventDefault();

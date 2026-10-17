@@ -55,7 +55,7 @@ async function wait(page: Page, id: string, value: string) {
 }
 async function login(page: Page, username: string) {
   await page.goto(app.origin);
-  await wait(page, "badge", "RECOVERY READY");
+  await wait(page, "badge", "MATCH READY");
   await page.getByLabel("Username", { exact: true }).fill(username);
   await page.getByLabel("Password", { exact: false }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
