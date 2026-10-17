@@ -25,6 +25,12 @@ const validators = new Map(
   ]),
 );
 export const messages = {
+  COMBAT_NOT_STARTED: "Begin combat before issuing tactical orders.",
+  INVALID_TARGET: "Choose a live opposing target, or an outpost to capture.",
+  COMBAT_RANGE:
+    "Target is outside weapon range or line of sight. Raid launchers can advance with an attack order.",
+  COMBAT_SERVICE:
+    "Retreat home or bring a surviving recovery robot within two cells before salvaging.",
   UNIT_POWER: "Recharge the shared base battery before deploying or servicing this unit.",
   UNIT_SITE: "Choose a free, reachable cell on your side of the dump.",
   MANUFACTURING_REQUIREMENTS:
@@ -42,8 +48,7 @@ export const messages = {
   INVALID_REQUEST: "The request does not match the supported game contract.",
   CONTRACT_MISMATCH:
     "The runtime has an unsupported schema. Install the documented Open-Industries version.",
-  FULL_GAME_UNSUPPORTED:
-    "Full matches are not available yet. Combat and victory are still missing.",
+  FULL_GAME_UNSUPPORTED: "Full matches are not available yet. Victory resolution is still missing.",
   DISABLED: "The requested feature is disabled in the runtime configuration.",
   NOT_AVAILABLE: "The match, invitation or object is unavailable to this account.",
   CONFLICT: "State changed. Read a fresh snapshot before submitting a new command.",

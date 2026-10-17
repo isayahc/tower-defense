@@ -151,6 +151,13 @@ export function createGame(request) {
     } catch (error) {
       if (
         [
+          "COMBAT_NOT_STARTED",
+          "INVALID_TARGET",
+          "COMBAT_RANGE",
+          "COMBAT_SERVICE",
+          "UNIT_POWER",
+          "UNIT_SITE",
+          "MANUFACTURING_REQUIREMENTS",
           "ROBOT_REQUIRED",
           "LEGACY_DEPOSIT",
           "ROBOT_BUSY",
@@ -281,7 +288,7 @@ export function createGame(request) {
       make(
         "text",
         { x: o.position.x, y: o.position.y + 4, class: "map-label", "text-anchor": "middle" },
-        "OUTPOST",
+        "OUTPOST " + (o.owner_slot ? "CREW " + o.owner_slot : "NEUTRAL"),
       );
     }
     for (const t of w.towers) {
@@ -312,6 +319,21 @@ export function createGame(request) {
         "text",
         { x: u.position.x + 2, y: u.position.y, class: "map-label" },
         u.kind === "raid-launcher" ? "RAID" : "DEF",
+      );
+    }
+    for (const t of snapshot.combat?.targets ?? []) {
+      if (t.slot === snapshot.players.find((p) => p.you)?.slot) continue;
+      make("circle", {
+        cx: t.position.x,
+        cy: t.position.y,
+        r: 1,
+        fill: t.health ? "#f27878" : "#777",
+        "data-combat-target": t.id,
+      });
+      make(
+        "text",
+        { x: t.position.x + 1, y: t.position.y - 1, class: "map-label" },
+        t.kind + " " + t.health + "/" + t.max_health,
       );
     }
     for (const [i, robot] of snapshot.field.robots.entries()) {
@@ -701,7 +723,56 @@ export function createGame(request) {
       outputs.append(row);
     }
   }
+  function renderCombat() {
+    const c = snapshot.combat,
+      slot = snapshot.players.find((p) => p.you)?.slot;
+    el("start-combat").dataset.allowed = String(!c && snapshot.status === "active");
+    el("start-combat").hidden = !!c;
+    el("combat-note").textContent = c
+      ? "Combat is live. Orders continue while disconnected. Raid launchers advance one cell per second (30 J/cell). Capture requires five uncontested seconds. Salvage takes one server tick and requires home proximity or a recovery robot within two cells. Tower destruction has no winner yet."
+      : "Recovery is peaceful until either crew begins combat. This reveals public tactical positions, health and unit kinds for both crews.";
+    const select = el("combat-target"),
+      targets = (c?.targets ?? []).filter((t) => t.slot !== slot && t.health > 0);
+    const key = JSON.stringify(targets.map((t) => [t.id, t.slot]));
+    if (select.dataset.options !== key) {
+      const prior = select.value;
+      select.replaceChildren();
+      for (const t of targets) {
+        const option = node(
+          "option",
+          (t.slot ? "Crew " + t.slot : "Neutral") + " · " + t.kind + " · " + t.id.slice(0, 8),
+        );
+        option.value = t.id;
+        select.append(option);
+      }
+      if ([...select.options].some((o) => o.value === prior)) select.value = prior;
+      select.dataset.options = key;
+    }
+    const status = el("combat-targets");
+    status.replaceChildren();
+    for (const t of c?.targets ?? [])
+      status.append(
+        node(
+          "p",
+          (t.slot === slot ? "Your" : t.slot ? "Crew " + t.slot : "Neutral") +
+            " " +
+            t.kind +
+            " · " +
+            t.health +
+            " / " +
+            t.max_health +
+            " health",
+          "note",
+        ),
+      );
+    el("combat-events").textContent = (c?.events ?? [])
+      .slice(-8)
+      .map((e) => e.kind + " · " + new Date(e.at_ms).toLocaleTimeString())
+      .join(" | ");
+  }
+  el("start-combat").addEventListener("click", () => action("start_combat"));
   function renderUnits() {
+    renderCombat();
     const list = el("units-list");
     list.replaceChildren();
     const state = snapshot.units;
@@ -757,7 +828,20 @@ export function createGame(request) {
         row.append(
           node(
             "p",
-            "Opposing tower: " + (t.in_range ? "in range" : "out of range") + " · " + t.reason,
+            t.kind + " target: " + (t.in_range ? "in range" : "out of range") + " · " + t.reason,
+          ),
+        );
+      const order = snapshot.combat?.orders.find((o) => o.unit_id === u.id);
+      if (order)
+        row.append(
+          node(
+            "p",
+            "Order: " +
+              order.order +
+              " · " +
+              order.state +
+              (order.reason ? " · " + order.reason : "") +
+              (order.progress_ms ? " · " + order.progress_ms / 1000 + " s" : ""),
           ),
         );
       const label = u.kind + " " + u.id.slice(0, 8);
@@ -781,6 +865,39 @@ export function createGame(request) {
             true,
           ),
         );
+      if (snapshot.combat && u.state === "deployed" && u.enabled) {
+        const send = (order, target_id = null) =>
+          action("combat_order", { unit_id: u.id, order, target_id });
+        row.append(button("Defend with " + label, () => send("defend"), true));
+        const selected = snapshot.combat.targets.find((t) => t.id === el("combat-target").value);
+        if (selected?.slot && selected.slot !== snapshot.players.find((p) => p.you)?.slot) {
+          row.append(
+            button(
+              "Attack target with " + label,
+              () => send("attack", el("combat-target").value),
+              true,
+            ),
+          );
+          row.append(
+            button(
+              "Hold and target with " + label,
+              () => send("target", el("combat-target").value),
+              true,
+            ),
+          );
+        }
+        if (u.kind === "raid-launcher") {
+          row.append(button("Retreat " + label, () => send("retreat"), true));
+          if (selected?.kind === "outpost")
+            row.append(
+              button(
+                "Capture outpost with " + label,
+                () => send("capture", el("combat-target").value),
+                true,
+              ),
+            );
+        }
+      }
       if (!u.enabled && ["stowed", "deployed"].includes(u.state)) {
         const ammunition = snapshot.manufacturing.products.find(
           (a) => a.kind === "steel-slug" && a.state === "available",
@@ -824,6 +941,7 @@ export function createGame(request) {
       list.append(row);
     }
   }
+  el("combat-target").addEventListener("change", renderUnits);
   for (const id of [
     "production-recipe",
     "production-batches",
@@ -979,7 +1097,7 @@ export function createGame(request) {
         ? "Share the invitation with one other player. Work begins when they join."
         : s.status === "completed"
           ? `Ended: ${s.completion.reason.replaceAll("-", " ")}. Your material and history remain saved. No combat result is recorded.`
-          : "Survey, recover, haul and inspect scrap with your robots. Make parts and construct equipment from inspected material. Combat remains in development.";
+          : "Survey, recover, haul and inspect scrap with your robots. Make parts and construct equipment from inspected material. Begin combat when your defenses are supplied. Victory resolution is still pending.";
     el("invitation").hidden = s.status !== "waiting" || slot !== 1;
     el("invite-match").value = s.match_id;
     el("invite-code").value = invite?.id === s.match_id ? invite.code : "";
@@ -990,6 +1108,7 @@ export function createGame(request) {
     el("end-session").dataset.allowed = String(s.status !== "completed");
     el("finish-recovery").dataset.allowed = String(
       s.status === "active" &&
+        !s.combat &&
         !s.base.ready_to_finish &&
         s.jobs.some((j) => j.state === "completed" && !j.recipe.startsWith("inspect-")) &&
         !s.field.robots.some((r) => r.job_id || r.cargo.length) &&
@@ -1000,7 +1119,7 @@ export function createGame(request) {
       : "Finish recovery session";
     el("power-reading").textContent = `${(s.machines[0].energy_mj / 1000000).toFixed(1)} / 20 kJ`;
     el("power-note").textContent =
-      `Solar 100 W · separator 500 W · ${(s.base.power.generated_mj / 1000000).toFixed(1)} kJ generated`;
+      `Solar ${s.base.power.solar_w} W · separator 500 W · ${(s.base.power.generated_mj / 1000000).toFixed(1)} kJ generated`;
     const options = el("deposit-choice");
     if (options.dataset.match !== s.match_id) {
       options.replaceChildren();
@@ -1129,9 +1248,14 @@ export function createGame(request) {
     renderProduction();
     renderRobots();
     const assets = el("assets");
+    const expanded = new Set(
+      [...assets.querySelectorAll("details[open]")].map((d) => d.dataset.assetId),
+    );
     assets.replaceChildren();
     for (const a of s.base.assets) {
       const details = node("details");
+      details.dataset.assetId = a.id;
+      details.open = expanded.has(a.id);
       details.append(node("summary", `${a.label} · ${a.status}`));
       const ul = node("ul");
       for (const c of a.components)

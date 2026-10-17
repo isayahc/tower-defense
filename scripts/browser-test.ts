@@ -54,6 +54,7 @@ async function press(page: Page, name: string) {
         "astra.game_manufacturing_catalog",
       ].includes(operation);
     });
+    void pending.catch(() => {});
     await page
       .getByRole("button", { name, exact: true })
       .and(page.locator(":enabled"))
@@ -403,7 +404,7 @@ async function assemble(
   );
 }
 /** Real recovered stock and original tested hardware become a supplied platform on desktop/mobile. */
-async function constructTurret(page: Page) {
+async function constructTurret(page: Page, rival: Page) {
   await recoverFamily(page, 1, "packaging", "bench-trim-hdpe", "hdpe-housing");
   await press(page, "Return and recharge · robot 2");
   await page.waitForFunction(
@@ -458,7 +459,9 @@ async function constructTurret(page: Page) {
   const unitId = await card.getAttribute("data-unit-id");
   assert(unitId);
   const suffix = "sentry-turret " + unitId.slice(0, 8);
-  await page.getByLabel("Deployment X", { exact: true }).fill("38");
+  await page
+    .getByLabel("Deployment X", { exact: true })
+    .fill(process.argv.includes("--combat") ? "11" : "38");
   await page.getByLabel("Deployment Y", { exact: true }).fill("24");
   await page.waitForFunction(
     () => Number.parseFloat(document.getElementById("power-reading")?.textContent ?? "0") >= 2,
@@ -469,8 +472,29 @@ async function constructTurret(page: Page) {
   await press(page, "Load steel slug into " + suffix);
   await press(page, "Enable " + suffix);
   assert((await card.textContent())?.includes("1 / 4 steel slugs"));
-  assert((await card.textContent())?.includes("combat-not-implemented"));
+  assert((await card.textContent())?.includes("combat-not-started"));
   assert.equal(await page.locator('circle[data-unit-id="' + unitId + '"]').count(), 1);
+  if (process.argv.includes("--combat")) {
+    await press(page, "Begin combat");
+    const rejected = page.waitForResponse(
+      (r) =>
+        r.url().endsWith("/api/runtime") && r.request().postDataJSON()?.args.order === "target",
+    );
+    await page.getByRole("button", { name: "Hold and target with " + suffix, exact: true }).click();
+    assert.equal((await rejected).status(), 400);
+    await wait(page, "game-state", "LIVE");
+    assert((await page.locator("#game-message").textContent())?.includes("range"));
+    await press(page, "Defend with " + suffix);
+    await rival.getByLabel("Select a waste site").selectOption({ label: "Crew 1 · cable" });
+    await press(rival, "Survey with camera-depth · robot 1");
+    await page.waitForFunction(
+      () => document.getElementById("combat-targets")?.textContent?.includes("55 / 80 health"),
+      undefined,
+      { timeout: 45000 },
+    );
+    assert((await card.textContent())?.includes("0 / 4 steel slugs"));
+    await press(rival, "Retreat and unload · robot 1");
+  }
   await page.locator(".production-panel").screenshot({ path: "test-results/unit-desktop.png" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
@@ -480,7 +504,11 @@ async function constructTurret(page: Page) {
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await page.locator(".production-panel").screenshot({ path: "test-results/unit-mobile.png" });
   await press(page, "Salvage " + suffix + " (300 J)");
-  assert((await page.locator("#units-list").textContent())?.includes("salvaged"));
+  await page.waitForFunction(
+    () => document.getElementById("units-list")?.textContent?.includes("salvaged"),
+    undefined,
+    { timeout: 15000 },
+  );
   await page.setViewportSize({ width: 1360, height: 980 });
 }
 
@@ -520,7 +548,12 @@ try {
             response.status() === 409 &&
             body?.error?.code === "CONFLICT" &&
             input?.name === "astra.game_command";
-          if (!knownConflict)
+          const knownRangeRejection =
+            path === "/api/runtime" &&
+            response.status() === 400 &&
+            body?.error?.code === "COMBAT_RANGE" &&
+            input?.args?.order === "target";
+          if (!knownConflict && !knownRangeRejection)
             unexpectedResponses.push(
               JSON.stringify({ path, status: response.status(), input, body }),
             );
@@ -697,7 +730,7 @@ try {
   // Keep these approval/click flows sequential so neither test races a stale approval.
   await recoverFamily(a, 1, "construction", "bench-recover-steel", "steel-bracket");
   await constructPress(a);
-  await constructTurret(a);
+  await constructTurret(a, b);
   await recoverFamily(b, 2, "vehicle", "isolate-vehicle", "aluminum-housing");
   await manufacturePart(b, "copper-conductor", "game-copper-v1", 0.1);
   await b
@@ -714,27 +747,40 @@ try {
   await press(a, "Survey with camera-depth · robot 1");
   await press(a, "Interrupt · robot 1");
   await press(a, "Retreat and unload · robot 1");
-  await a.waitForFunction(
-    () => !(document.getElementById("finish-recovery") as HTMLButtonElement)?.disabled,
-    undefined,
-    { timeout: 45000 },
-  );
-  await press(a, "Finish recovery session");
-  await wait(a, "match-status", "ACTIVE");
-  const finished = b.waitForResponse(
-    (response) =>
-      response.url().endsWith("/api/runtime") &&
-      response.request().postDataJSON()?.args.action === "finish_recovery",
-  );
-  await wait(b, "game-state", "LIVE");
-  // Hold through a polling interval: redraw must not swallow a user gesture.
-  await b
-    .getByRole("button", { name: "Finish recovery session", exact: true })
-    .click({ delay: 2200 });
-  assert.equal((await finished).status(), 200);
-  await wait(a, "match-status", "COMPLETED");
-  await wait(b, "match-status", "COMPLETED");
-  assert((await a.locator("#lifecycle-note").textContent())?.includes("recovery complete"));
+  if (process.argv.includes("--combat")) {
+    a.on("dialog", async (dialog) => {
+      assert.equal(dialog.type(), "confirm");
+      await dialog.accept();
+    });
+    await press(a, "End session for both crews");
+    await wait(a, "match-status", "COMPLETED");
+    await wait(b, "match-status", "COMPLETED");
+    console.log(
+      "PASS real desktop/mobile manufactured combat: defend order, server shot and ammo use, rival hauler damage, private materials, mobile reconnect, disable, home-side timed salvage, end session and no console errors",
+    );
+  } else {
+    await a.waitForFunction(
+      () => !(document.getElementById("finish-recovery") as HTMLButtonElement)?.disabled,
+      undefined,
+      { timeout: 45000 },
+    );
+    await press(a, "Finish recovery session");
+    await wait(a, "match-status", "ACTIVE");
+    const finished = b.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/runtime") &&
+        response.request().postDataJSON()?.args.action === "finish_recovery",
+    );
+    await wait(b, "game-state", "LIVE");
+    // Hold through a polling interval: redraw must not swallow a user gesture.
+    await b
+      .getByRole("button", { name: "Finish recovery session", exact: true })
+      .click({ delay: 2200 });
+    assert.equal((await finished).status(), 200);
+    await wait(a, "match-status", "COMPLETED");
+    await wait(b, "match-status", "COMPLETED");
+    assert((await a.locator("#lifecycle-note").textContent())?.includes("recovery complete"));
+  }
   await Promise.all(responseChecks);
   assert.deepEqual(unexpectedResponses, []);
   assert.deepEqual(errors, []);

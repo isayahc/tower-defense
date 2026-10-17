@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Mapped-Assembly/Open-Industries
-          ref: 932678a4ef8c29c14fb285c33f6d4b8d051a16a1
+          ref: dfd6ef553e2caea1d3461aa44a7a7a9cc3ba7e32
           path: .integration/open-industries
       - uses: actions/setup-node@v4
         with:
@@ -41,7 +41,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Verify desktop and mobile browsers
         if: runner.os == 'Linux'
-        run: npm run test:browser
+        run: npm run test:browser -- --combat
       - uses: actions/upload-artifact@v4
         if: always() && runner.os == 'Linux'
         with:
