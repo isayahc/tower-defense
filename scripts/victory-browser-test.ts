@@ -67,24 +67,35 @@ async function open(page: Page, id: string) {
   await wait(page, "match-id", id);
   await wait(page, "game-state", "LIVE");
 }
-async function current(page: Page, id: string) {
-  return page.evaluate(
-    async (id) =>
-      (
-        await (
-          await fetch("/api/runtime", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              name: "astra.game_read_match",
-              args: { version: 5, match_id: id },
-            }),
-          })
-        ).json()
-      ).snapshot,
-    id,
-  );
+async function runtimeCall(page: Page, name: string, args: Record<string, unknown>) {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const response = await page.evaluate(
+      async ({ name, args }) => {
+        const response = await fetch("/api/runtime", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name, args }),
+        });
+        return { status: response.status, body: await response.json() };
+      },
+      { name, args },
+    );
+    // Live polling can occupy the session. A 429 rejects admission, so retry is safe.
+    if (response.status === 429 && response.body.error?.code === "LIMIT_REACHED") {
+      await page.waitForTimeout(150);
+      continue;
+    }
+    return response;
+  }
+  assert.fail("Repeated session admission limits during result verification");
 }
+async function current(page: Page, id: string) {
+  const response = await runtimeCall(page, "astra.game_read_match", { version: 5, match_id: id });
+  assert.equal(response.status, 200, JSON.stringify(response.body));
+  assert(response.body.snapshot, JSON.stringify(response.body));
+  return response.body.snapshot;
+}
+
 try {
   await mkdir("test-results", { recursive: true });
   const ca = await browser.newContext(),
@@ -137,27 +148,14 @@ try {
         .locator("#match-result")
         .screenshot({ path: `test-results/result-${outcome}-${i}.png` });
     }
-    const rejected = await a.evaluate(
-      async ({ id, revision, command }) =>
-        (
-          await fetch("/api/runtime", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              name: "astra.game_command",
-              args: {
-                version: 5,
-                match_id: id,
-                expected_revision: revision,
-                command_id: command,
-                action: "abandon_match",
-              },
-            }),
-          })
-        ).json(),
-      { id, revision: sa.revision, command: randomUUID() },
-    );
-    assert.equal(rejected.error.code, "MATCH_INACTIVE");
+    const rejected = await runtimeCall(a, "astra.game_command", {
+      version: 5,
+      match_id: id,
+      expected_revision: sa.revision,
+      command_id: randomUUID(),
+      action: "abandon_match",
+    });
+    assert.equal(rejected.body.error?.code, "MATCH_INACTIVE", JSON.stringify(rejected.body));
     await runtime.restart();
     await a.reload();
     await b.reload();
