@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       OI_CHECKOUT: ${{ github.workspace }}/.integration/open-industries
     steps:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Mapped-Assembly/Open-Industries
-          ref: d34bf1f4921cd715abc5586352e7e44afbed0b51
+          ref: 6add4cf6ba0b2ad16d2a8d13b1fd76a1ef206ea8
           path: .integration/open-industries
       - uses: actions/setup-node@v4
         with:
@@ -42,9 +42,9 @@ jobs:
       - name: Verify victory, defeat and tie on desktop/mobile
         if: runner.os == 'Linux'
         run: npm run test:browser:results
-      - name: Verify desktop and mobile browsers
+      - name: Verify full create/join-to-victory match
         if: runner.os == 'Linux'
-        run: npm run test:browser -- --combat
+        run: npm run test:browser:full
       - uses: actions/upload-artifact@v4
         if: always() && runner.os == 'Linux'
         with:

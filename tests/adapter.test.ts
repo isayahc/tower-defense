@@ -47,7 +47,7 @@ test("exact schemas are required; plausible names, extra identity fields and cha
   validateResult("astra.game_describe", captured.contract);
   assert.throws(
     () =>
-      validateResult("astra.game_describe", { ...captured.contract, ready_for_full_game: true }),
+      validateResult("astra.game_describe", { ...captured.contract, ready_for_full_game: false }),
     IntegrationError,
   );
   assert.throws(

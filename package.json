@@ -21,7 +21,8 @@
     "test:browser": "node --import tsx scripts/browser-test.ts",
     "test:integration": "node --import tsx scripts/integration-test.ts",
     "check:materials": "node scripts/sync-material-science.mjs",
-    "test:browser:results": "node --import tsx scripts/victory-browser-test.ts"
+    "test:browser:results": "node --import tsx scripts/victory-browser-test.ts",
+    "test:browser:full": "node --import tsx scripts/browser-test.ts --full"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.0",

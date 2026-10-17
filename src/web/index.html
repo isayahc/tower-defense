@@ -11,7 +11,7 @@
 <body>
   <header><a class="brand" href="/" aria-label="City Dump home"><span class="mark" aria-hidden="true">▥</span> CITY DUMP</a><span class="edition">TOWER DEFENSE / DEVELOPMENT</span></header>
   <main>
-    <section class="intro" aria-labelledby="title"><p class="eyebrow">RECOVER. REBUILD. DEFEND.</p><h1 id="title">Tomorrow starts<br>in the scrap heap.</h1><p class="lede">Two crews. One city dump. Turn discarded materials into working industry—and eventually, a winning defense.</p></section>
+    <section class="intro" aria-labelledby="title"><p class="eyebrow">RECOVER. REBUILD. DEFEND.</p><h1 id="title">Tomorrow starts<br>in the scrap heap.</h1><p class="lede">Two crews. One city dump. Turn discarded materials into working industry—and a winning defense.</p></section>
     <div class="workspace">
       <section class="panel connection" aria-labelledby="connection-title">
         <div class="panel-top"><span class="eyebrow">01 / SERVER CONNECTION</span><span id="badge" class="badge">CHECKING</span></div>
@@ -41,8 +41,8 @@
       <div class="section-title"><div><p class="eyebrow">03 / THE RECLAMATION YARD</p><h2 id="recovery-title">Put the dump to work.</h2></div><span id="game-state" class="badge">CONNECTING</span></div>
       <p id="game-message" role="status" aria-live="polite">Restoring your matches…</p><button type="button" id="retry-command" class="secondary" hidden>Retry pending command</button>
       <div class="lobby">
-        <section class="panel"><h3>Start a recovery session</h3><p>Invite one partner. Each crew gets equivalent equipment and finite scrap deposits.</p><button type="button" id="create-recovery" data-mutation="true">Create recovery session</button>
-        <details class="join"><summary>Have an invitation?</summary><form id="join-form"><label for="join-match">Match ID</label><input id="join-match" required maxlength="36" pattern="[a-fA-F0-9\-]{36}"><label for="join-code">Invitation code</label><input id="join-code" required maxlength="36" pattern="[a-fA-F0-9\-]{36}"><button type="submit" id="join-button" data-mutation="true">Join recovery session</button></form></details></section>
+        <section class="panel"><h3>Start a match</h3><p>Invite one partner. Each crew gets equivalent equipment and finite scrap deposits.</p><button type="button" id="create-recovery" data-mutation="true">Create match</button>
+        <details class="join"><summary>Have an invitation?</summary><form id="join-form"><label for="join-match">Match ID</label><input id="join-match" required maxlength="36" pattern="[a-fA-F0-9\-]{36}"><label for="join-code">Invitation code</label><input id="join-code" required maxlength="36" pattern="[a-fA-F0-9\-]{36}"><button type="submit" id="join-button" data-mutation="true">Join match</button></form></details></section>
         <section class="panel"><div class="panel-top"><h3>Your saved matches</h3><button type="button" id="refresh-list" class="secondary">Refresh list</button></div><div id="match-list"></div><button type="button" id="more-matches" class="secondary" disabled>More matches</button></section>
       </div>
       <section id="match-view" hidden>
@@ -50,7 +50,7 @@
           <p class="eyebrow">FINAL MATCH RESULT</p><h2 id="result-heading">Final result</h2><p id="result-summary"></p><p id="result-record" class="note"></p>
         </section>
         <div class="section-title"><div><p class="eyebrow" id="match-status"></p><h2 id="match-heading">Your recovery session</h2><p id="revision" class="note"></p></div><button type="button" id="refresh-match" class="secondary">Reconnect match</button></div>
-        <p id="lifecycle-note"></p><p class="note">Match <span id="match-id"></span></p>
+        <p id="match-phase" class="badge" role="status">Waiting</p><p id="lifecycle-note"></p><p class="note">Match <span id="match-id"></span></p>
         <div id="invitation" class="panel" hidden><h3>Your invitation</h3><label for="invite-match">Share this match ID</label><input id="invite-match" readonly><label for="invite-code">Share this invitation code</label><input id="invite-code" readonly placeholder="Renew the invitation to get a new code"><p id="invite-expiry" class="note"></p><button type="button" id="rotate-invite" class="secondary" data-mutation="true">Renew invitation</button></div>
         <div class="map-layout">
           <section class="panel map-panel"><div class="panel-top"><p class="eyebrow">FINITE MUNICIPAL DUMP</p><span class="badge muted">96 × 56</span></div><svg id="dump-map" viewBox="0 0 96 56" aria-label="Shared dump map: bases, waste sites, service roads and neutral outposts" role="img"><title>Municipal dump map</title></svg><p class="map-legend"><span>◆ Bases</span><span>● Waste sites</span><span>□ Neutral outposts</span><span>▰ Service roads</span></p><label for="deposit-choice">Select a waste site</label><select id="deposit-choice"></select><div id="deposit-detail"></div></section>
@@ -101,7 +101,7 @@
         <div class="session-actions"><button type="button" id="finish-recovery" data-mutation="true">Finish recovery session</button><button type="button" id="end-session" class="secondary" data-mutation="true">End session for both crews</button><p class="note">After both crews process their cable, both can finish to archive the session.</p></div>
       </section>
     </section>
-    <section class="next" aria-labelledby="next-title"><div><p class="eyebrow">BEYOND RECOVERY</p><h2 id="next-title">From scrap to strategy.</h2><p>Recover material, manufacture parts and construct equipment today. Combat and full-match victory are still being built.</p></div><button id="start-match" type="button" disabled aria-describedby="match-note">Start full match <span aria-hidden="true">↗</span></button><p id="match-note" class="note">Full matches are not available yet.</p></section>
+    <section class="next" aria-labelledby="next-title"><div><p class="eyebrow">BEYOND RECOVERY</p><h2 id="next-title">From scrap to strategy.</h2><p>Recover material, manufacture parts and construct equipment today. Build a supplied launcher, begin combat and destroy the opposing tower. Results survive reconnects.</p></div><button id="start-match" type="button" disabled aria-describedby="match-note">Start full match <span aria-hidden="true">↗</span></button><p id="match-note" class="note">Sign in to start a full two-player match.</p></section>
   </main>
   <footer><span>CITY DUMP / BUILT ON OPEN-INDUSTRIES</span><span>Server-owned state. Persistent progress.</span></footer>
 </body>

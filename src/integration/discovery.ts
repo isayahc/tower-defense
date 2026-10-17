@@ -14,14 +14,14 @@ export function assessGameReadiness(
   processingContractVerified = false,
 ) {
   return {
-    status: "integration-error" as const,
-    canStartMatch: false as const,
+    status: processingContractVerified ? ("ready" as const) : ("integration-error" as const),
+    canStartMatch: processingContractVerified && contract.ready_for_full_game === true,
     discoveredToolCount: toolNames.length,
     processingContractVerified,
     canStartRecovery: processingContractVerified,
-    code: processingContractVerified ? "FULL_GAME_UNSUPPORTED" : "GAME_CONTRACT_UNVERIFIED",
+    code: processingContractVerified ? "GAME_READY" : "GAME_CONTRACT_UNVERIFIED",
     message: processingContractVerified
-      ? "The shared dump supports recovery, manufacturing, combat and persistent match results. Full-match startup verification remains pending."
+      ? "The runtime supports full two-player matches: recover, manufacture, fight and resolve victory or a tie."
       : "OpenIndustries has no verified compatible game contract. Match startup is disabled.",
     requiredCapabilities: [...GAME_REQUIREMENTS],
   };

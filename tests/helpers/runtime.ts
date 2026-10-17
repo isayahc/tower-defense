@@ -69,6 +69,7 @@ export async function launchRuntime(
       origin,
       directory,
       close,
+      stop,
       restart: async (): Promise<void> => {
         await stop();
         await start();

@@ -49,7 +49,7 @@ export const messages = {
   CONTRACT_MISMATCH:
     "The runtime has an unsupported schema. Install the documented Open-Industries version.",
   FULL_GAME_UNSUPPORTED:
-    "Full-match startup is not available yet. Create a recovery session, manufacture equipment and begin combat.",
+    "Full matches require the documented compatible runtime and a healthy scheduler.",
   DISABLED: "The requested feature is disabled in the runtime configuration.",
   NOT_AVAILABLE: "The match, invitation or object is unavailable to this account.",
   CONFLICT: "State changed. Read a fresh snapshot before submitting a new command.",
