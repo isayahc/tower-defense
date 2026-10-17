@@ -477,6 +477,11 @@ async function constructTurret(page: Page, rival: Page) {
     const suffix = `raid-launcher ${unitId.slice(0, 8)}`;
     await page.getByLabel("Deployment X", { exact: true }).fill("47");
     await page.getByLabel("Deployment Y", { exact: true }).fill("24");
+    await page.waitForFunction(
+      () => Number.parseFloat(document.getElementById("power-reading")?.textContent ?? "0") >= 2,
+      undefined,
+      { timeout: 45000 },
+    );
     await press(page, `Deploy ${suffix} (1000 J)`);
     await press(page, `Load steel slug into ${suffix}`);
     await press(page, `Load steel slug into ${suffix}`);

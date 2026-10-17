@@ -879,7 +879,8 @@ export function createGame(request) {
                 unit_id: u.id,
                 position: { x: Number(el("unit-x").value), y: Number(el("unit-y").value) },
               }),
-            true,
+            snapshot.machines[0].status === "ready" &&
+              snapshot.machines[0].energy_mj >= spec.deployment_energy_j * 1000,
           ),
         );
       if (u.state === "deployed")
