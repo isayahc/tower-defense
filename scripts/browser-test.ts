@@ -460,10 +460,8 @@ async function constructTurret(page: Page, rival: Page) {
   const suffix = "sentry-turret " + unitId.slice(0, 8);
   await page
     .getByLabel("Deployment X", { exact: true })
-    .fill(process.argv.includes("--combat") ? "20" : "38");
-  await page
-    .getByLabel("Deployment Y", { exact: true })
-    .fill(process.argv.includes("--combat") ? "21" : "24");
+    .fill(process.argv.includes("--combat") ? "11" : "38");
+  await page.getByLabel("Deployment Y", { exact: true }).fill("24");
   await page.waitForFunction(
     () => Number.parseFloat(document.getElementById("power-reading")?.textContent ?? "0") >= 2,
     undefined,
@@ -486,18 +484,7 @@ async function constructTurret(page: Page, rival: Page) {
       { timeout: 45000 },
     );
     assert((await card.textContent())?.includes("0 / 4 steel slugs"));
-    await press(rival, "Interrupt · robot 1");
     await press(rival, "Retreat and unload · robot 1");
-    await page.getByLabel("Select a waste site").selectOption({ label: "Crew 1 · cable" });
-    await press(page, "Survey with camera-depth · robot 1");
-    await page.waitForFunction(
-      () =>
-        ![...document.querySelectorAll("#robots button")].some(
-          (b) => b.textContent === "Interrupt · robot 1",
-        ),
-      undefined,
-      { timeout: 45000 },
-    );
   }
   await page.locator(".production-panel").screenshot({ path: "test-results/unit-desktop.png" });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -751,7 +738,7 @@ try {
     await wait(a, "match-status", "COMPLETED");
     await wait(b, "match-status", "COMPLETED");
     console.log(
-      "PASS real desktop/mobile manufactured combat: defend order, server shot and ammo use, rival hauler damage, private materials, mobile reconnect, disable, service-robot timed salvage, end session and no console errors",
+      "PASS real desktop/mobile manufactured combat: defend order, server shot and ammo use, rival hauler damage, private materials, mobile reconnect, disable, home-side timed salvage, end session and no console errors",
     );
   } else {
     await a.waitForFunction(
