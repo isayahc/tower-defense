@@ -48,7 +48,8 @@ export const messages = {
   INVALID_REQUEST: "The request does not match the supported game contract.",
   CONTRACT_MISMATCH:
     "The runtime has an unsupported schema. Install the documented Open-Industries version.",
-  FULL_GAME_UNSUPPORTED: "Full matches are not available yet. Victory resolution is still missing.",
+  FULL_GAME_UNSUPPORTED:
+    "Full-match startup is not available yet. Create a recovery session, manufacture equipment and begin combat.",
   DISABLED: "The requested feature is disabled in the runtime configuration.",
   NOT_AVAILABLE: "The match, invitation or object is unavailable to this account.",
   CONFLICT: "State changed. Read a fresh snapshot before submitting a new command.",

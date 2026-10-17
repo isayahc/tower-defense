@@ -55,7 +55,10 @@ export function createGame(request) {
   function controls() {
     const usable = access && !busy && !stale && !pending;
     for (const n of document.querySelectorAll("#recovery [data-mutation]"))
-      n.disabled = !usable || n.dataset.allowed === "false";
+      n.disabled =
+        !usable ||
+        n.dataset.allowed === "false" ||
+        (!!n.closest("#match-view") && snapshot?.status === "completed");
     el("retry-command").hidden = !pending;
     el("retry-command").disabled = !access || busy;
     el("refresh-match").disabled = !access || busy;
@@ -729,7 +732,7 @@ export function createGame(request) {
     el("start-combat").dataset.allowed = String(!c && snapshot.status === "active");
     el("start-combat").hidden = !!c;
     el("combat-note").textContent = c
-      ? "Combat is live. Orders continue while disconnected. Raid launchers advance one cell per second (30 J/cell). Capture requires five uncontested seconds. Salvage takes one server tick and requires home proximity or a recovery robot within two cells. Tower destruction has no winner yet."
+      ? "Combat is live. Orders continue while disconnected. Raid launchers advance one cell per second (30 J/cell). Capture requires five uncontested seconds. Salvage takes one server tick and requires home proximity or a recovery robot within two cells. Tower destruction ends the match; equal-time destruction is a tie."
       : "Recovery is peaceful until either crew begins combat. This reveals public tactical positions, health and unit kinds for both crews.";
     const select = el("combat-target"),
       targets = (c?.targets ?? []).filter((t) => t.slot !== slot && t.health > 0);
@@ -1087,17 +1090,37 @@ export function createGame(request) {
     const focusText = focused?.tagName === "BUTTON" ? focused.textContent : null;
     const s = snapshot,
       slot = s.players.find((p) => p.you).slot;
+    const result = s.completion?.result_version === "victory-v1" ? s.completion : null;
+    const outcome = result
+      ? result.winner_slot === null
+        ? "Tie"
+        : result.winner_slot === slot
+          ? "Victory"
+          : "Defeat"
+      : null;
+    el("match-result").hidden = !result;
+    if (result) {
+      el("result-heading").textContent = outcome;
+      el("result-summary").textContent =
+        result.winner_slot === null
+          ? "Both towers were destroyed in the same server tick. The match is a tie."
+          : `Crew ${result.winner_slot} wins by tower destruction. All match activity has stopped.`;
+      el("result-record").textContent =
+        `Recorded ${new Date(result.resolved_at_ms).toLocaleString()} · ${result.tower_health.map((t) => `Crew ${t.slot} tower: ${t.health} / 300`).join(" · ")} · ${result.result_id}`;
+    }
     el("match-heading").textContent =
-      `Crew ${slot} / ${s.status === "waiting" ? "Waiting for your partner" : s.status === "completed" ? "Session complete" : "Municipal dump"}`;
+      `Crew ${slot} / ${s.status === "waiting" ? "Waiting for your partner" : s.status === "completed" ? (outcome ?? "Session complete") : "Municipal dump"}`;
     el("match-id").textContent = s.match_id;
     el("revision").textContent = `Revision ${s.revision} · ${s.world.versions.map}`;
-    el("match-status").textContent = s.status.toUpperCase();
+    el("match-status").textContent = (outcome ?? s.status).toUpperCase();
     el("lifecycle-note").textContent =
       s.status === "waiting"
         ? "Share the invitation with one other player. Work begins when they join."
         : s.status === "completed"
-          ? `Ended: ${s.completion.reason.replaceAll("-", " ")}. Your material and history remain saved. No combat result is recorded.`
-          : "Survey, recover, haul and inspect scrap with your robots. Make parts and construct equipment from inspected material. Begin combat when your defenses are supplied. Victory resolution is still pending.";
+          ? result
+            ? "Final result saved by Open-Industries. Reconnect preserves this result; further match commands are disabled."
+            : `Ended: ${s.completion.reason.replaceAll("-", " ")}. Your material and history remain saved. No combat result is recorded.`
+          : "Survey, recover, haul and inspect scrap with your robots. Make parts and construct equipment from inspected material. Begin combat when your defenses are supplied. Tower destruction ends the match; equal-time destruction is a tie.";
     el("invitation").hidden = s.status !== "waiting" || slot !== 1;
     el("invite-match").value = s.match_id;
     el("invite-code").value = invite?.id === s.match_id ? invite.code : "";

@@ -647,3 +647,7 @@ progress {
 html {
   overflow-anchor: none;
 }
+
+#result-record {
+  overflow-wrap: anywhere;
+}

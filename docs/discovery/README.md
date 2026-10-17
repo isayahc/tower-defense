@@ -1,6 +1,6 @@
 # Open-Industries discovery evidence
 
-The current target is the **SQLite city-dump runtime v5 / schema 9**, pinned in `.github/workflows/ci.yml`. The [combat discovery summary](openindustries-combat-v5.json) records all **28 tools**, including ten game tools, exact-schema verification and the full-report SHA-256. Reviewed extensions add public tactical projections, combat orders, timed movement/fire/capture/retreat/salvage and industry interruption. Earlier envelope state, pins, paid work and immutable receipts are preserved. Older clients fail exact-schema discovery. The [unit capture](openindustries-units-v5.json), [manufacturing capture](openindustries-manufacturing-v5.json) and [recovery capture](openindustries-recovery-v5.json) remain historical evidence.
+The current target is the **SQLite city-dump runtime v5 / schema 10**, pinned in `.github/workflows/ci.yml`. The [victory discovery summary](openindustries-victory-v5.json) records all **28 tools**, including ten game tools, exact-schema verification and the full-report SHA-256. Reviewed extensions add public tactical projections, combat orders, timed movement/fire/capture/retreat/salvage industry interruption and a persistent public final result. Earlier envelope state, pins, paid work and immutable receipts are preserved. Older clients fail exact-schema discovery. The [unit capture](openindustries-units-v5.json), [manufacturing capture](openindustries-manufacturing-v5.json) and [recovery capture](openindustries-recovery-v5.json) remain historical evidence.
 
 The [robot-v5 capture](openindustries-robots-v5.json) remains historical evidence from the earlier separate robot branch (`5e306c2033bfdb15510f98f575f937e1578f6a3f`), when 21 tools were installed.
 
@@ -22,7 +22,7 @@ The [v2 capture](openindustries-runtime-v2.json) preserves the earlier SQLite pr
 | Persistence and clock | SQLite WAL and independent runtime process | Service ticks without browsers/MCP; durable receipt and restart tests run in upstream CI |
 | Synchronization | `astra.game_read_match` | Full-snapshot polling; replace state; no event stream advertised |
 | Combat | `start_combat`, `combat_order`, timed `salvage_unit` | Public tactical health/positions; server-clock defend/attack/target/capture/retreat; private inventories |
-| Lifecycle/results | `finish_recovery`, `abandon_match`, invitation expiry | Waiting/active/completed sessions; no combat winner; full-match startup stays disabled |
+| Lifecycle/results | `finish_recovery`, `abandon_match`, invitation expiry | Waiting/active/completed sessions; authoritative tower-destruction win/tie; full-match startup verification remains #17 |
 | Power | 100 W solar / 20 kJ battery in authoritative snapshots | Bounded charging, explicit spill and spent energy; no manufacturing dependency |
 | Existing 13 scene/room tools | Still listed by discovery | Adapter does not expose them through the game backend |
 
