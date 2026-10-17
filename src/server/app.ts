@@ -112,7 +112,10 @@ export async function startApp(config: AppConfig = {}) {
         };
       } catch (error) {
         return {
-          state: "unavailable",
+          state:
+            error instanceof IntegrationError && error.code === "CONTRACT_MISMATCH"
+              ? "incompatible"
+              : "unavailable",
           canStartMatch: false,
           processingContractVerified: false,
           registrationEnabled: false,

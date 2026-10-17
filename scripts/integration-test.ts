@@ -61,6 +61,7 @@ try {
   try {
     const status = await (await fetch(`${incompatible.origin}/api/integration`)).json();
     assert.equal(status.canStartMatch, false);
+    assert.equal(status.state, "incompatible");
     const refused = await fetch(`${incompatible.origin}/api/session`, {
       method: "POST",
       headers: { origin: incompatible.origin, "content-type": "application/json" },

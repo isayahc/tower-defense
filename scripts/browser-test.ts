@@ -632,6 +632,7 @@ try {
   await recover(a);
   await press(a, "Pause processing");
   assert((await a.locator("#jobs").textContent())?.includes("paused"));
+  assert.equal(await a.locator("#match-phase").textContent(), "Paused");
   await press(a, "Resume processing");
   await recover(b);
   // Hold a real background read: sign-out must stop new polls and wait, not hit the busy-session gate.
