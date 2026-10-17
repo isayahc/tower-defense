@@ -1439,7 +1439,13 @@ export function createGame(request) {
     controls();
   });
   setInterval(() => {
-    if (access && snapshot && !busy && !pending && !interacting) void work(read, true);
+    if (access && !busy && !pending && !interacting)
+      void work(async () => {
+        const restoring = stale;
+        if (snapshot) await read();
+        else await list(true, true);
+        if (restoring && !stale) say("Current state restored.");
+      }, true);
   }, 2000);
   return {
     async settleForSignOut() {

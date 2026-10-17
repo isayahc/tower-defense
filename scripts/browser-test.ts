@@ -18,6 +18,7 @@ let app: Awaited<ReturnType<typeof startApp>>;
 const errors: string[] = [];
 const responseChecks: Promise<void>[] = [];
 const unexpectedResponses: string[] = [];
+let restarting = false;
 const password = "browser-test-password-123";
 async function wait(page: Page, id: string, text: string) {
   await page.waitForFunction(
@@ -580,6 +581,7 @@ try {
     });
     page.on("response", (response) => {
       if (response.status() < 400) return;
+      const duringRestart = restarting;
       responseChecks.push(
         (async () => {
           const path = new URL(response.url()).pathname;
@@ -596,7 +598,24 @@ try {
             response.status() === 400 &&
             body?.error?.code === "COMBAT_RANGE" &&
             input?.args?.order === "target";
-          if (!knownConflict && !knownRangeRejection)
+          const readOnly = [
+            "astra.game_read_match",
+            "astra.game_list_matches",
+            "astra.game_science_catalog",
+            "astra.game_manufacturing_catalog",
+          ].includes(input?.name);
+          const rejectedReadAdmission =
+            path === "/api/runtime" &&
+            readOnly &&
+            response.status() === 429 &&
+            body?.error?.code === "LIMIT_REACHED";
+          const interruptedRead =
+            duringRestart &&
+            path === "/api/runtime" &&
+            readOnly &&
+            response.status() === 503 &&
+            ["UNAVAILABLE", "SCHEDULER_UNAVAILABLE"].includes(body?.error?.code);
+          if (!knownConflict && !knownRangeRejection && !rejectedReadAdmission && !interruptedRead)
             unexpectedResponses.push(
               JSON.stringify({ path, status: response.status(), input, body }),
             );
@@ -817,18 +836,22 @@ try {
           { timeout: 90000 },
         );
       if (wave === 0) {
+        restarting = true;
         await runtime.restart();
         await a.reload();
         await b.reload();
         await wait(a, "match-status", "ACTIVE");
         await wait(b, "match-status", "ACTIVE");
         await wait(a, "game-state", "LIVE");
+        await wait(b, "game-state", "LIVE");
+        restarting = false;
       }
     }
     await wait(a, "result-heading", "Victory");
     await wait(b, "result-heading", "Defeat");
     const finalRecord = await a.locator("#result-record").textContent();
     assert.equal(await b.locator("#result-record").textContent(), finalRecord);
+    restarting = true;
     await runtime.restart();
     for (const page of [a, b]) {
       await page.reload();
@@ -840,6 +863,7 @@ try {
           .evaluateAll((nodes) => nodes.every((n) => (n as HTMLButtonElement).disabled)),
       );
     }
+    restarting = false;
     await wait(a, "result-heading", "Victory");
     await wait(b, "result-heading", "Defeat");
     assert.equal(await a.locator("#result-record").textContent(), finalRecord);

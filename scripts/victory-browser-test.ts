@@ -47,11 +47,21 @@ try {
 const app = await startApp({ checkout, serviceUrl: runtime.origin, port: 0 }),
   errors: string[] = [];
 async function wait(page: Page, id: string, value: string) {
-  await page.waitForFunction(
-    ({ id, value }) => document.getElementById(id)?.textContent === value,
-    { id, value },
-    { timeout: 45000 },
-  );
+  try {
+    await page.waitForFunction(
+      ({ id, value }) => document.getElementById(id)?.textContent === value,
+      { id, value },
+      { timeout: 45000 },
+    );
+  } catch (error) {
+    console.error(
+      "Result browser state",
+      await page.locator("#game-state").textContent(),
+      await page.locator("#account-badge").textContent(),
+      await page.locator("#game-message").textContent(),
+    );
+    throw error;
+  }
 }
 async function login(page: Page, username: string) {
   await page.goto(app.origin);
@@ -104,7 +114,26 @@ try {
     b = await cb.newPage();
   for (const page of [a, b]) page.on("pageerror", (e) => errors.push(e.message));
   await login(a, "resultalice");
+  let initialReadRejected = false;
+  await b.route("**/api/runtime", async (route) => {
+    if (
+      !initialReadRejected &&
+      route.request().postDataJSON()?.name === "astra.game_list_matches"
+    ) {
+      initialReadRejected = true;
+      // Model one rejected read admission, with no fabricated match response or database edit.
+      await route.fulfill({
+        status: 429,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "LIMIT_REACHED", message: "A previous read still occupies this session." },
+        }),
+      });
+    } else await route.continue();
+  });
   await login(b, "resultbob");
+  assert(initialReadRejected);
+  await b.unroute("**/api/runtime");
   for (const outcome of ["win", "loss", "tie"]) {
     const id = matches[outcome];
     assert(id);
