@@ -45,8 +45,7 @@ try {
   throw error;
 }
 const app = await startApp({ checkout, serviceUrl: runtime.origin, port: 0 }),
-  errors: string[] = [],
-  diagnostics: string[] = [];
+  errors: string[] = [];
 async function wait(page: Page, id: string, value: string) {
   try {
     await page.waitForFunction(
@@ -61,8 +60,6 @@ async function wait(page: Page, id: string, value: string) {
       await page.locator("#account-badge").textContent(),
       await page.locator("#game-message").textContent(),
     );
-    console.error("Result browser errors", errors);
-    console.error("Result browser diagnostics", diagnostics);
     throw error;
   }
 }
@@ -115,22 +112,7 @@ try {
     cb = await browser.newContext(),
     a = await ca.newPage(),
     b = await cb.newPage();
-  for (const page of [a, b]) {
-    page.on("pageerror", (e) => errors.push(e.message));
-    page.on("framenavigated", (frame) => {
-      if (frame !== page.mainFrame()) return;
-      const url = new URL(frame.url());
-      diagnostics.push(`NAV ${url.pathname}${url.search ? "?query" : ""}`);
-    });
-    page.on("console", (message) => {
-      if (message.type() === "error") diagnostics.push(`CONSOLE ${message.text()}`);
-    });
-    page.on("response", (response) => {
-      const url = new URL(response.url());
-      if (!url.pathname.startsWith("/api/")) return;
-      diagnostics.push(`${response.request().method()} ${url.pathname} ${response.status()}`);
-    });
-  }
+  for (const page of [a, b]) page.on("pageerror", (e) => errors.push(e.message));
   await login(a, "resultalice");
   let initialReadRejected = false;
   await b.route("**/api/runtime", async (route) => {
