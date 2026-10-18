@@ -116,8 +116,18 @@ test("unconfigured web foundation serves assets, blocks startup, origin attacks 
       "/package.json",
     ])
       assert.equal((await fetch(app.origin + path)).status, 404);
-    for (const path of ["/", "/app.js", "/game.js", "/style.css"]) {
-      const text = await (await fetch(app.origin + path)).text();
+    for (const path of [
+      "/",
+      "/app.js",
+      "/game.js",
+      "/spatial-sensing.js",
+      "/spatial-sync.js",
+      "/style.css",
+      "/spatial-sensing.css",
+    ]) {
+      const response = await fetch(app.origin + path);
+      assert.equal(response.status, 200, path);
+      const text = await response.text();
       assert(!/ASTRA_GAME_SESSION|password_hash|process\.env|service_role|supabase/i.test(text));
     }
   } finally {
