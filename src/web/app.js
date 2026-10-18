@@ -16,7 +16,11 @@ async function request(path, options = {}) {
     error.code = result.error?.code;
     throw error;
   }
-  window.dispatchEvent(new CustomEvent("game-api-result", { detail: { path, result } }));
+  if (result.snapshot)
+    setTimeout(
+      () => window.dispatchEvent(new CustomEvent("game-api-result", { detail: { path, result } })),
+      0,
+    );
   return result;
 }
 const game = createGame(request);
