@@ -36,7 +36,10 @@ export async function startApp(config: AppConfig = {}) {
         ["/", "index.html", "text/html"],
         ["/app.js", "app.js", "text/javascript"],
         ["/game.js", "game.js", "text/javascript"],
+        ["/spatial-sensing.js", "spatial-sensing.js", "text/javascript"],
+        ["/spatial-sync.js", "spatial-sync.js", "text/javascript"],
         ["/style.css", "style.css", "text/css"],
+        ["/spatial-sensing.css", "spatial-sensing.css", "text/css"],
       ].map(
         async ([route, file, mime]) =>
           [
