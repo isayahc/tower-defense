@@ -1,5 +1,6 @@
 import { createGame } from "/game.js";
 import { installSpatialSensing } from "/spatial-sensing.js";
+import { publishSpatialSnapshot } from "/spatial-sync.js";
 const element = (id) => document.getElementById(id);
 let connected = false;
 let authenticated = false;
@@ -16,11 +17,7 @@ async function request(path, options = {}) {
     error.code = result.error?.code;
     throw error;
   }
-  if (result.snapshot)
-    setTimeout(
-      () => window.dispatchEvent(new CustomEvent("game-api-result", { detail: { result } })),
-      0,
-    );
+  publishSpatialSnapshot(result);
   return result;
 }
 const game = createGame(request);
