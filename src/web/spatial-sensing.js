@@ -2,7 +2,9 @@ const svgNamespace = "http://www.w3.org/2000/svg";
 
 export function latestObservation(snapshot, targetId) {
   if (!snapshot?.field?.observations) return undefined;
-  return snapshot.field.observations.filter((observation) => observation.target_id === targetId).at(-1);
+  return snapshot.field.observations
+    .filter((observation) => observation.target_id === targetId)
+    .at(-1);
 }
 
 export function sensorReady(snapshot, robot, sensor) {
@@ -163,7 +165,11 @@ export function installSpatialSensing(request) {
     targets.replaceChildren();
     for (const deposit of snapshot.world.deposits) {
       const summary = targetSummary(snapshot, deposit);
-      const row = element("div", undefined, `spatial-target ${summary.current ? "current" : "unknown"}`);
+      const row = element(
+        "div",
+        undefined,
+        `spatial-target ${summary.current ? "current" : "unknown"}`,
+      );
       row.dataset.targetId = deposit.id;
       row.append(element("strong", summary.title));
       row.append(element("p", summary.detail, "note"));
@@ -201,12 +207,22 @@ export function installSpatialSensing(request) {
         ),
       );
       row.append(element("p", sensor.establishes, "note"));
-      row.append(element("p", availability, sensor.kit && !(kit?.tested && kit.condition === "sound") ? "sensor-locked" : "sensor-ready"));
+      row.append(
+        element(
+          "p",
+          availability,
+          sensor.kit && !(kit?.tested && kit.condition === "sound")
+            ? "sensor-locked"
+            : "sensor-ready",
+        ),
+      );
       if (sensor.kit && kit && !kit.tested) {
         const inspect = element("button", `Bench-test ${sensor.kit}`, "secondary");
         inspect.type = "button";
         inspect.disabled = actionBusy || !!pending || snapshot.status !== "active";
-        inspect.addEventListener("click", () => beginAction("inspect_component", { component_id: kit.id }));
+        inspect.addEventListener("click", () =>
+          beginAction("inspect_component", { component_id: kit.id }),
+        );
         row.append(inspect);
       }
       sensors.append(row);
@@ -222,7 +238,9 @@ export function installSpatialSensing(request) {
     actions.append(element("p", targetSummary(snapshot, target).title, "note"));
     for (const [index, robot] of snapshot.field.robots.entries()) {
       const block = element("div", undefined, "spatial-robot-actions");
-      block.append(element("strong", `Robot ${index + 1} · ${robot.position.x}, ${robot.position.y}`));
+      block.append(
+        element("strong", `Robot ${index + 1} · ${robot.position.x}, ${robot.position.y}`),
+      );
       const busy = !!activeRobotJob(robot) || robot.retired;
       for (const sensor of snapshot.field.sensor_catalog) {
         const ready = sensorReady(snapshot, robot, sensor);
@@ -315,7 +333,8 @@ export function installSpatialSensing(request) {
 
   function svg(tag, attributes) {
     const result = document.createElementNS(svgNamespace, tag);
-    for (const [name, value] of Object.entries(attributes)) result.setAttribute(name, String(value));
+    for (const [name, value] of Object.entries(attributes))
+      result.setAttribute(name, String(value));
     return result;
   }
 
@@ -386,7 +405,9 @@ export function installSpatialSensing(request) {
     const detail = document.getElementById("deposit-detail");
     if (detail) {
       detail.querySelector("[data-spatial-evidence]")?.remove();
-      const selected = snapshot.world.deposits.find((deposit) => deposit.id === depositChoice?.value);
+      const selected = snapshot.world.deposits.find(
+        (deposit) => deposit.id === depositChoice?.value,
+      );
       if (selected) {
         const observation = latestObservation(snapshot, selected.id);
         const evidence = element("div", undefined, "spatial-deposit-evidence");
