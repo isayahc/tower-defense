@@ -1,5 +1,6 @@
 import { createGame } from "/game.js";
 import { installSpatialSensing } from "/spatial-sensing.js";
+import { installSpatialSync } from "/spatial-sync.js";
 const element = (id) => document.getElementById(id);
 let connected = false;
 let authenticated = false;
@@ -16,15 +17,11 @@ async function request(path, options = {}) {
     error.code = result.error?.code;
     throw error;
   }
-  if (result.snapshot)
-    setTimeout(
-      () => window.dispatchEvent(new CustomEvent("game-api-result", { detail: { path, result } })),
-      0,
-    );
   return result;
 }
 const game = createGame(request);
 installSpatialSensing(request);
+installSpatialSync(request);
 window.addEventListener("game-auth-expired", () => {
   authenticated = false;
   accountView();
