@@ -40,16 +40,16 @@ async function refresh() {
   accountView();
   try {
     const result = await request("/api/integration");
-    connected = result.state === "partial" && result.canStartRecovery === true;
+    connected = result.state === "ready" && result.canStartMatch === true;
     element("connection-title").textContent = connected
-      ? "Recovery runtime connected."
+      ? "Full-match runtime connected."
       : "The runtime is not ready.";
     element("connection-message").textContent = result.message;
-    element("badge").textContent = connected ? "RECOVERY READY" : "NOT CONNECTED";
+    element("badge").textContent = connected ? "MATCH READY" : "NOT CONNECTED";
     element("badge").className = connected ? "badge ready" : "badge";
     document.querySelector(".connection").classList.toggle("connected", connected);
     element("capability-note").textContent = connected
-      ? "A shared finite map, private recovery and persistent processing are ready."
+      ? "Recover scrap, build industry and destroy the opposing tower. Simultaneous destruction is a tie."
       : "These features need a compatible, running server.";
     element("register-label").hidden = !connected || !result.registrationEnabled;
     if (element("register-label").hidden) element("register").checked = false;

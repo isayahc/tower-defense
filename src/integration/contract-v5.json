@@ -11,7 +11,7 @@
     "retry_policy": "same-command-id-and-identical-payload-returns-original-receipt",
     "polling": "full-snapshot-replaces-local-state",
     "ready_for_recovery": true,
-    "ready_for_full_game": false,
+    "ready_for_full_game": true,
     "supported": [
       "two-player-invite",
       "private-deposit-assay",
@@ -54,7 +54,8 @@
       "outpost-capture",
       "combat-retreat",
       "authoritative-victory",
-      "simultaneous-destruction-tie"
+      "simultaneous-destruction-tie",
+      "full-match-startup"
     ],
     "unsupported": ["sensor-kit-manufacturing", "property-certification", "events"]
   },
@@ -2248,7 +2249,7 @@
                 "const": true
               },
               "ready_for_full_game": {
-                "const": false
+                "const": true
               },
               "supported": {
                 "const": [
@@ -2293,7 +2294,8 @@
                   "outpost-capture",
                   "combat-retreat",
                   "authoritative-victory",
-                  "simultaneous-destruction-tie"
+                  "simultaneous-destruction-tie",
+                  "full-match-startup"
                 ]
               },
               "unsupported": {

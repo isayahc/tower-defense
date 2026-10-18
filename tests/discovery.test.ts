@@ -82,6 +82,11 @@ test("unknown tool names never certify a game contract or enable a fallback", ()
   );
 });
 
+test("exact full-game contract enables startup capability only after verification", () => {
+  assert.equal(assessGameReadiness([], false).canStartMatch, false);
+  assert.equal(assessGameReadiness([], true).canStartMatch, true);
+});
+
 test("discovery rejects repeated cursors and duplicate tools", async () => {
   for (const mode of ["loop", "duplicate"]) {
     const server = await contractDouble(mode);

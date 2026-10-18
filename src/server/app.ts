@@ -1,8 +1,15 @@
+import { isDeepStrictEqual } from "node:util";
 import { randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage } from "node:http";
 import { GameAdapter } from "../integration/adapter.js";
-import { gameTool, IntegrationError, safeError, validateRequest } from "../integration/contract.js";
+import {
+  gameTool,
+  IntegrationError,
+  safeError,
+  validateRequest,
+  contract,
+} from "../integration/contract.js";
 import { discoverOpenIndustries } from "../integration/discovery.js";
 import { RuntimeService } from "./service.js";
 
@@ -94,16 +101,21 @@ export async function startApp(config: AppConfig = {}) {
         if (!report.readiness.processingContractVerified)
           return { state: "incompatible", ...report.readiness, registrationEnabled: false };
         const health = await service.request("/health");
+        if (!isDeepStrictEqual(health.contract, contract))
+          throw new IntegrationError("CONTRACT_MISMATCH");
         if (health.version !== 5 || health.scheduler_healthy !== true)
           throw new IntegrationError("SCHEDULER_UNAVAILABLE");
         return {
-          state: "partial",
+          state: report.readiness.canStartMatch ? "ready" : "partial",
           ...report.readiness,
           registrationEnabled: health.registration_enabled === true,
         };
       } catch (error) {
         return {
-          state: "unavailable",
+          state:
+            error instanceof IntegrationError && error.code === "CONTRACT_MISMATCH"
+              ? "incompatible"
+              : "unavailable",
           canStartMatch: false,
           processingContractVerified: false,
           registrationEnabled: false,
@@ -195,7 +207,10 @@ export async function startApp(config: AppConfig = {}) {
         loginPending++;
         try {
           const status = await integration();
-          if (status.processingContractVerified !== true || status.state !== "partial")
+          if (
+            status.processingContractVerified !== true ||
+            !["ready", "partial"].includes(String(status.state))
+          )
             throw new IntegrationError("CONTRACT_MISMATCH");
           const result = await service.request(
             body.mode === "register" ? "/auth/register" : "/auth/login",
@@ -233,7 +248,6 @@ export async function startApp(config: AppConfig = {}) {
       }
       if (req.method === "POST" && ["/api/runtime", "/api/matches"].includes(req.url ?? "")) {
         if (!session) throw new IntegrationError("AUTH_REQUIRED");
-        if (req.url === "/api/matches") throw new IntegrationError("FULL_GAME_UNSUPPORTED");
         if (session.busy) throw new IntegrationError("LIMIT_REACHED");
         if (Date.now() - session.window >= 60000) {
           session.window = Date.now();
@@ -243,6 +257,22 @@ export async function startApp(config: AppConfig = {}) {
         session.busy = true;
         try {
           const body = await jsonBody(req);
+          if (req.url === "/api/matches") {
+            const status = await integration();
+            if (status.state === "unavailable")
+              throw new IntegrationError(
+                status.code === "SCHEDULER_UNAVAILABLE" ? "SCHEDULER_UNAVAILABLE" : "UNAVAILABLE",
+              );
+            if (status.canStartMatch !== true) throw new IntegrationError("CONTRACT_MISMATCH");
+            // Check the live worker for each startup, even if discovery is cached.
+            const health = await service.request("/health");
+            if (!isDeepStrictEqual(health.contract, contract))
+              throw new IntegrationError("CONTRACT_MISMATCH");
+            if (health.version !== 5 || health.scheduler_healthy !== true)
+              throw new IntegrationError("SCHEDULER_UNAVAILABLE");
+            validateRequest("astra.game_create_match", body);
+            return send(200, await session.adapter.call("astra.game_create_match", body));
+          }
           if (
             Object.keys(body).sort().join(",") !== "args,name" ||
             !gameTool(body.name) ||

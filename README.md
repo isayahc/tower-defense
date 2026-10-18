@@ -2,9 +2,9 @@
 
 A planned two-player strategy game where rival robot crews turn a city's discarded waste into working industry, defenses, and raiding units. Scan the dump, recover useful scrap, process it into usable materials, and destroy the opposing tower before your own falls.
 
-**Status: two-player recovery, manufacturing and authoritative combat and persistent victory/defeat/tie results are implemented; complete-match browser verification remains in #17.** The backend verifies the 28-tool Open-Industries v5 server and exposes ten reviewed game tools. Players can survey, haul, inspect, process, manufacture turrets/launchers, then issue defend, attack, target, capture and retreat orders. The server owns movement, ammunition, damage and persistent salvage. The stack uses SQLite and native game accounts. See [web setup](docs/web-foundation.md) and [discovery evidence](docs/discovery/README.md).
+**Status: full two-player matches are enabled, from authenticated create/join through recovery, manufacturing, combat and persistent victory/defeat/tie results.** The backend verifies the 28-tool Open-Industries v5 server and exposes ten reviewed game tools. Players can survey, haul, inspect, process, manufacture turrets/launchers, then issue defend, attack, target, capture and retreat orders. The server owns movement, ammunition, damage and persistent salvage. The stack uses SQLite and native game accounts. See [web setup](docs/web-foundation.md) and [discovery evidence](docs/discovery/README.md).
 
-This README is the product specification. [The science-engine design](docs/material-science.md) defines the intended full engine; [the integration contract](docs/openindustries-contract.md) defines the authoritative boundary still required for playable matches.
+This README is the product specification. [The science-engine design](docs/material-science.md) defines the intended full engine; [the integration contract](docs/openindustries-contract.md) defines the authoritative boundary for playable matches.
 
 ## The Setting
 
@@ -117,7 +117,7 @@ npm ci
 npm run dev
 ```
 
-The web foundation opens at `http://127.0.0.1:3000`. Without an upstream checkout/service, it displays an integration error and keeps startup disabled. With the v5 service connected, register/sign in, create a recovery session and invite one partner. Select a deposit, survey it with a robot, collect using the resulting evidence, and haul the load home for bench inspection and processing. Saved matches, depletion and jobs survive refresh/reconnect. Robots now execute persistent survey, collection, return, recharge, interrupt and retreat jobs. Use the manufacturing panel to build machines, turrets, ammunition and raid launchers from recovered stock and tested hardware. Select **Begin combat** when supplied; tactical positions become public, and orders continue while disconnected. Tower health and industry damage are authoritative; one destroyed tower awards the other crew the win; both destroyed in the same server tick is a tie.
+The web foundation opens at `http://127.0.0.1:3000`. Without an upstream checkout/service, it displays an integration error and keeps startup disabled. With the v5 service connected, register/sign in, select **Start full match** and invite one partner. Select a deposit, survey it with a robot, collect using the resulting evidence, and haul the load home for bench inspection and processing. Saved matches, depletion and jobs survive refresh/reconnect. Robots now execute persistent survey, collection, return, recharge, interrupt and retreat jobs. Use the manufacturing panel to build machines, turrets, ammunition and raid launchers from recovered stock and tested hardware. Select **Begin combat** when supplied; tactical positions become public, and orders continue while disconnected. Tower health and industry damage are authoritative; one destroyed tower awards the other crew the win; both destroyed in the same server tick is a tie.
 
 ```sh
 npm run demo:science
@@ -133,4 +133,4 @@ npm start
 
 `check` runs formatting, lint, type checking, tests and the production build. Integration/browser tests require `OI_CHECKOUT` in the environment and use temporary native SQLite databases. Install Chromium with `npx playwright install chromium` before browser tests. CI checks Linux/Windows and uploads browser screenshots.
 
-Discovery exits **2** while the full-game contract is incomplete, including when the SQLite processing contract is verified. No offline or client-owned simulation is available. The backend never creates material, advances time or resolves combat itself.
+Discovery exits **0** for the exact full-game capability contract and **2** for an incompatible contract. Service health and authentication are separately verified by the web backend. No offline or client-owned simulation is available. The backend never creates material, advances time or resolves combat itself.

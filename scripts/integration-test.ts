@@ -1,3 +1,5 @@
+import { createServer } from "node:http";
+import { contract } from "../src/integration/contract.js";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { GameAdapter } from "../src/integration/adapter.js";
@@ -35,6 +37,44 @@ async function call(cookie: string, name: string, args: unknown) {
   return { status: response.status, body: await response.json() };
 }
 try {
+  // Correct protocol version and live worker are insufficient when the service advertises an old contract.
+  let unexpectedAuth = 0;
+  const incompatibleService = createServer((req, res) => {
+    if (req.url !== "/health") unexpectedAuth++;
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        version: 5,
+        scheduler_healthy: true,
+        contract: { ...contract, ready_for_full_game: false },
+      }),
+    );
+  });
+  await new Promise<void>((done) => incompatibleService.listen(0, "127.0.0.1", done));
+  const address = incompatibleService.address();
+  assert(address && typeof address !== "string");
+  const incompatible = await startApp({
+    checkout,
+    serviceUrl: `http://127.0.0.1:${address.port}`,
+    port: 0,
+  });
+  try {
+    const status = await (await fetch(`${incompatible.origin}/api/integration`)).json();
+    assert.equal(status.canStartMatch, false);
+    assert.equal(status.state, "incompatible");
+    const refused = await fetch(`${incompatible.origin}/api/session`, {
+      method: "POST",
+      headers: { origin: incompatible.origin, "content-type": "application/json" },
+      body: JSON.stringify({ mode: "login", username: "alice", password }),
+    });
+    assert.equal(refused.status, 400);
+    assert.equal((await refused.json()).error.code, "CONTRACT_MISMATCH");
+    assert.equal(unexpectedAuth, 0);
+  } finally {
+    await incompatible.close();
+    incompatibleService.closeAllConnections();
+    await new Promise<void>((done) => incompatibleService.close(() => done()));
+  }
   const discovery = await discoverOpenIndustries(checkout);
   const installed = new Set(discovery.tools.map((tool) => tool.name));
   for (const name of [
@@ -49,17 +89,28 @@ try {
     assert(installed.has(`astra.game_${name}`), `Missing required game tool: ${name}`);
   assert(installed.has("astra.simulation_describe"));
   assert.equal(discovery.readiness.processingContractVerified, true);
-  assert.equal(discovery.readiness.canStartMatch, false);
+  assert.equal(discovery.readiness.canStartMatch, true);
   const a = await register("alice"),
     b = await register("bob"),
     c = await register("outsider");
   assert.notEqual(a, b);
   const createdRequest = command();
-  const created = await call(a, "create_match", createdRequest);
+  const startup = async (args: unknown) => {
+    const response = await fetch(`${app.origin}/api/matches`, {
+      method: "POST",
+      headers: { ...headers, cookie: a },
+      body: JSON.stringify(args),
+    });
+    return { status: response.status, body: await response.json() };
+  };
+  const created = await startup(createdRequest);
   assert.equal(created.status, 200);
   const id = created.body.snapshot.match_id;
-  assert.deepEqual((await call(a, "create_match", createdRequest)).body, created.body);
-  assert.equal((await call(a, "create_match", { ...command(), player_id: "bob" })).status, 400);
+  assert.deepEqual((await startup(createdRequest)).body, created.body);
+  assert.equal((await startup({ ...command(), player_id: "bob" })).status, 400);
+  const readiness = await (await fetch(`${app.origin}/api/integration`)).json();
+  assert.equal(readiness.state, "ready");
+  assert.equal(readiness.canStartMatch, true);
   const joined = await call(b, "join_match", {
     ...command(),
     match_id: id,
@@ -179,7 +230,7 @@ try {
     headers: { ...headers, cookie: a },
     body: "{}",
   });
-  assert.equal((await denied.json()).error.code, "FULL_GAME_UNSUPPORTED");
+  assert.equal((await denied.json()).error.code, "INVALID_REQUEST");
   const crossSite = await fetch(`${app.origin}/api/runtime`, {
     method: "POST",
     headers: { ...headers, origin: "https://attacker.invalid", cookie: a },
@@ -216,6 +267,17 @@ try {
   } finally {
     await adapter.close();
   }
+  await runtime.stop();
+  const offlineStartup = await fetch(`${app.origin}/api/matches`, {
+    method: "POST",
+    headers: { ...headers, cookie: c },
+    body: JSON.stringify(command()),
+  });
+  assert.equal(offlineStartup.status, 503);
+  assert(
+    ["UNAVAILABLE", "SCHEDULER_UNAVAILABLE"].includes((await offlineStartup.json()).error.code),
+  );
+  await runtime.restart();
   console.log(
     "PASS actual SQLite + MCP + HTTP: contract gate, distinct accounts, ownership/privacy, invite limits, processing, idempotency, CSRF, cookies and session revocation",
   );
