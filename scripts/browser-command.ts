@@ -7,12 +7,20 @@ export interface CommandOptions {
   robotId?: string;
   clickTimeout?: number;
   responseTimeout?: number;
+  diagnosticTimeout?: number;
 }
 
 /** Read only command identifiers; never retain cookies, credentials, or full request bodies. */
 function describe(request: Request) {
   const path = new URL(request.url()).pathname;
-  const body = request.method() === "POST" ? request.postDataJSON() : null;
+  let body: { name?: string; args?: { action?: string; robot_id?: string } } | null = null;
+  if (["/api/matches", "/api/runtime"].includes(path) && request.method() === "POST") {
+    try {
+      body = request.postDataJSON();
+    } catch {
+      // Observing malformed traffic must not throw out of a Playwright event listener.
+    }
+  }
   return {
     path,
     method: request.method(),
@@ -99,7 +107,8 @@ export async function clickCommand(
       }),
     ]);
   } catch (error) {
-    const state = await page
+    let diagnosticTimer: ReturnType<typeof setTimeout> | undefined;
+    const stateRead = page
       .evaluate(() => ({
         state: document.getElementById("game-state")?.textContent,
         message: document.getElementById("game-message")?.textContent,
@@ -110,6 +119,13 @@ export async function clickCommand(
         })),
       }))
       .catch(() => null);
+    // A stalled renderer must not keep a failed command and its observers alive.
+    const state = await Promise.race([
+      stateRead,
+      new Promise<null>((resolve) => {
+        diagnosticTimer = setTimeout(() => resolve(null), options.diagnosticTimeout ?? 2000);
+      }),
+    ]).finally(() => clearTimeout(diagnosticTimer));
     const report = {
       button: name,
       phase,

@@ -109,3 +109,37 @@ test("an unavailable button reports the click phase and cleans up", async () => 
   await assert.rejects(clickCommand(page, "Disabled button regression"), /click phase failed/);
   clean(events);
 });
+
+test("a stalled diagnostic read cannot hide the failure or retain listeners", async () => {
+  await mkdir("test-results", { recursive: true });
+  const { page, events } = fixture(async () => {
+    throw new Error("button stayed disabled");
+  });
+  page.evaluate = (() => new Promise(() => {})) as Page["evaluate"];
+  await assert.rejects(
+    clickCommand(page, "Stalled renderer regression", { diagnosticTimeout: 10 }),
+    /click phase failed/,
+  );
+  clean(events);
+});
+
+test("malformed runtime traffic does not crash observers or match a recharge", async () => {
+  const { page, events } = fixture(async (events) => {
+    const malformed = request();
+    malformed.postDataJSON = () => {
+      throw new Error("Invalid JSON");
+    };
+    events.emit("request", malformed);
+    reply(events, malformed);
+    const wanted = request();
+    events.emit("request", wanted);
+    reply(events, wanted, 409);
+  });
+  assert.equal(
+    (
+      await clickCommand(page, "Recharge", { action: "recharge_robot", robotId: "robot-1" })
+    ).status(),
+    409,
+  );
+  clean(events);
+});
