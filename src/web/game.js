@@ -479,6 +479,7 @@ export function createGame(request) {
       const job = s.field.jobs.find((j) => j.id === r.job_id);
       const busy = r.retired || (job && ["running", "paused"].includes(job.state));
       const row = node("div", undefined, "job");
+      row.dataset.robotId = r.id;
       row.append(node("h3", `Robot ${i + 1}`));
       row.append(
         node(
