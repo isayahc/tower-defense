@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { chromium, type Page } from "playwright";
 import { startApp } from "../src/server/app.js";
 import { launchRuntime } from "../tests/helpers/runtime.js";
+import { clickCommand } from "./browser-command.js";
 
 const fullMatch = process.argv.includes("--full");
 const checkout = process.env.OI_CHECKOUT;
@@ -46,24 +47,19 @@ async function signIn(page: Page, username: string, register: boolean) {
 async function press(page: Page, name: string) {
   for (let attempt = 0; attempt < 3; attempt++) {
     await wait(page, "game-state", "LIVE");
-    const pending = page.waitForResponse((response) => {
-      if (response.url().endsWith("/api/matches")) return true;
-      if (!response.url().endsWith("/api/runtime")) return false;
-      const operation = response.request().postDataJSON()?.name;
-      return ![
-        "astra.game_read_match",
-        "astra.game_list_matches",
-        "astra.game_science_catalog",
-        "astra.game_manufacturing_catalog",
-      ].includes(operation);
-    });
-    void pending.catch(() => {});
-    await page
-      .getByRole("button", { name, exact: true })
-      .and(page.locator(":enabled"))
-      .first()
-      .click();
-    const response = await pending;
+    const recharge = /^Return and recharge · robot (\d+)$/.exec(name);
+    const robotId = recharge
+      ? await page
+          .locator("#robots > .job")
+          .nth(Number(recharge[1]) - 1)
+          .getAttribute("data-robot-id")
+      : null;
+    if (recharge) assert(robotId, `${name}: missing robot identity`);
+    const response = await clickCommand(
+      page,
+      name,
+      recharge ? { action: "recharge_robot", ...(robotId ? { robotId } : {}) } : {},
+    );
     const result = await response.json();
     await wait(page, "game-state", "LIVE");
     if (response.status() === 409 && result.error?.code === "CONFLICT") {

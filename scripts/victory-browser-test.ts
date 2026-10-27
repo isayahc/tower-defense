@@ -79,6 +79,8 @@ async function open(page: Page, id: string) {
 }
 async function runtimeCall(page: Page, name: string, args: Record<string, unknown>) {
   for (let attempt = 0; attempt < 10; attempt++) {
+    // Direct assertion reads share the UI's session; do not compete with its active poll.
+    await wait(page, "game-state", "LIVE");
     const response = await page.evaluate(
       async ({ name, args }) => {
         const response = await fetch("/api/runtime", {
@@ -146,6 +148,9 @@ try {
     await open(a, id);
     await open(b, id);
     assert.equal((await current(a, id)).status, "active");
+    // This suite deliberately edits near-final-blow fixtures. Give that write exclusive
+    // ownership instead of racing the live worker's SQLite write transactions.
+    await runtime.stop();
     const db = new GameDatabase(join(runtime.directory, "runtime.sqlite"));
     let secrets: string[][];
     try {
@@ -156,6 +161,7 @@ try {
     } finally {
       db.close();
     }
+    await runtime.restart();
     const ah = outcome === "tie" ? "Tie" : outcome === "win" ? "Victory" : "Defeat",
       bh = outcome === "tie" ? "Tie" : outcome === "win" ? "Defeat" : "Victory";
     await wait(a, "result-heading", ah);
@@ -201,6 +207,9 @@ try {
   console.log(
     "PASS actual SQLite/MCP/HTTP result views: victory, defeat and tie on desktop/mobile; equal-time server final blows, matching public records, private inventories, disabled controls, post-match rejection, hard restart and reconnect",
   );
+} catch (error) {
+  console.error("Original result-browser failure before cleanup:", error);
+  throw error;
 } finally {
   await browser.close();
   await app.close();

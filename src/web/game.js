@@ -9,6 +9,8 @@ const kg = (g) => `${(g / 1000).toFixed(2)} kg`;
 export function createGame(request) {
   let access = false;
   let busy = false;
+  let backgroundWork = false;
+  let waitingCommands = 0;
   let idleWaiters = [];
   let stale = true;
   let snapshot;
@@ -57,7 +59,9 @@ export function createGame(request) {
     el("game-message").textContent = text;
   };
   function controls() {
-    const usable = access && !busy && !stale && !pending;
+    // Polling must not disable a button between pointerdown and click. A user intent
+    // queues behind the read; queued/active mutations still disable further gestures.
+    const usable = access && (!busy || backgroundWork) && !waitingCommands && !stale && !pending;
     for (const n of document.querySelectorAll("#recovery [data-mutation]"))
       n.disabled =
         !usable ||
@@ -101,10 +105,18 @@ export function createGame(request) {
     // A user click that coincides with polling must not silently disappear.
     while (busy) {
       if (background) return;
-      await new Promise((resolve) => idleWaiters.push(resolve));
+      waitingCommands++;
+      controls();
+      try {
+        await new Promise((resolve) => idleWaiters.push(resolve));
+      } finally {
+        waitingCommands--;
+        controls();
+      }
       if (!access || epoch !== generation) return;
     }
     busy = true;
+    backgroundWork = background;
     controls();
     try {
       await fn();
@@ -127,6 +139,7 @@ export function createGame(request) {
       }
     } finally {
       busy = false;
+      backgroundWork = false;
       const waiting = idleWaiters;
       idleWaiters = [];
       for (const resume of waiting) resume();
@@ -479,6 +492,7 @@ export function createGame(request) {
       const job = s.field.jobs.find((j) => j.id === r.job_id);
       const busy = r.retired || (job && ["running", "paused"].includes(job.state));
       const row = node("div", undefined, "job");
+      row.dataset.robotId = r.id;
       row.append(node("h3", `Robot ${i + 1}`));
       row.append(
         node(
